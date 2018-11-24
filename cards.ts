@@ -1,10 +1,15 @@
-export class cards {
+export interface tuple {
+    turn: number;
+    value: number;
+}
+
+export class deck {
     private allcards:number[] = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9];
     private index:number;
 
     public constructor()
     {
-        this.index=0;
+        this.index = 0;
         this.shuffle()
     }
 
@@ -16,16 +21,11 @@ export class cards {
         }
     }
 
-    public nextTurn():number|false
+    public draw():tuple|false
     {
         this.index++;
-        if (this.index>=this.allcards.length) return false;
-        return this.index;
+        const end = 4; //this.allcards.length
+        if (this.index>=end) return false;
+        return {turn: this.index, value: this.allcards[this.index]}
     }
-
-    public getCard():number
-    {
-        return this.allcards[this.index];
-    }
-
 }
