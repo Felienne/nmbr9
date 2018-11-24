@@ -1,5 +1,5 @@
-import { Tile } from "./tile";
-
+const chalk = require('chalk');
+import { Tile, TILE_COLORS } from "./tile";
 
 export class board {
     //we gebruiken 2 losse datastructuren om het bord te representeren
@@ -31,14 +31,14 @@ export class board {
     public getAdjacencies(){
         const adjacencies = [];
         for (let y = 0; y < 80; y++){
-            for (let x = 0; x < 80; x++){    
+            for (let x = 0; x < 80; x++){
                 if (this.heightmap[y][x] == -1){
                     adjacencies.push({x,y})
                 }
             }
         }
 
-        
+
         return adjacencies;
     }
 
@@ -74,19 +74,19 @@ export class board {
         //TODO de vergelijking met -1 moet nog in een functie (want op hogere niveaus gaan we de vrijheid met een ander getal coderen)
 
         const below:number[] = tile.getOnes().map(p => this.heightmap[y+p.y][x+p.x]) //een lijst van alle element die 'onder' deze form ligt
-        
+
         //is minstens een van de vakjes die in de form een 1 is, in de heightmap een v (en dat is in de datastructuur een -1)
         const touchesV:boolean = below.some(x => x === -1)
 
         //lig ik 'recht' aka zijn alle getallen onder de form in de heightmap hetzelfde getal?
 
         const formBelow:number[] = below.filter(x => x !== -1) //eerst alle non-v's eruit filteren
-        
+
         const expectedLevel = 0; // formBelow[0] // TODO: Klopt niet meer vanaf tweede verdieping
         const balanced:boolean = formBelow.length === 0 || formBelow.every(x => x === expectedLevel) //dan kijken of alle elementen hetzelfde zin als het eerste
 
-        return touchesV && balanced 
-   
+        return touchesV && balanced
+
         // TODO: als we op een hogere verdieping liggen, moeten er minstens 2 instanties (turn-numbers) onder liggen
 
 
@@ -106,9 +106,16 @@ export class board {
                 for (let x = 0; x < 80; x++){
                     if (this.heightmap[y][x] === -1)
                         line += 'v'
-                    else
-                        line += this.heightmap[y][x]
-                
+                    else {
+                        const tileNr = this.heightmap[y][x]; // TODO: Niet het echte nummer!
+                        const height = this.heightmap[y][x];
+
+                        if (height === 0) {
+                            line += chalk.hex('#5C5C5C')('0');
+                        } else {
+                            line += chalk.hex(TILE_COLORS[tileNr])(height);
+                        }
+                    }
                 }
                 board += line + "\n";
             }
@@ -133,6 +140,6 @@ export class board {
         return board;
     }
 }
-    
+
 
 

@@ -1,10 +1,11 @@
+import { toASCII } from "punycode";
+
 export class Tile {
     public value: number;
     public form: number[][];
     public turn: number;     // turn represents at which turn this tile is used. This is important to be able to distinguish between different instances
                              // of the same number, since it is not allowed to place a tile on one instance.
                              // since there is only one tile per turn, this serves as identity
-
 
     public getOnes(){
         const ones = [];
@@ -14,15 +15,24 @@ export class Tile {
                     ones.push({y,x});
                     //TODO: iets komt nu altijd op level 1 terecht
                 } //TODO: Ook nog zorgen dat je geen 1'tjes overschrijft met vtjes.
-            }  
+            }
         }
         return ones;
     }
-
 }
 
-
-
+export const TILE_COLORS = [
+    '#BABABA', // 0
+    '#9C7300', // 1
+    '#BD6B0D', // 2
+    '#F2DB27', // 3
+    '#559E1C', // 4
+    '#4AD1D4', // 5
+    '#336FF2', // 6
+    '#9C0FD4', // 7
+    '#E820E8', // 8
+    '#D42242', // 9
+];
 
 export function getTile(n:number): Tile
 {
