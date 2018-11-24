@@ -24,7 +24,7 @@ export class deck {
     public draw():tuple|false
     {
         this.index++;
-        const end = 4; //this.allcards.length
+        const end = this.allcards.length;
         if (this.index>=end) return false;
         return {turn: this.index, value: this.allcards[this.index]}
     }

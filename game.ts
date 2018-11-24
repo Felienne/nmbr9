@@ -2,6 +2,17 @@ import * as tile from "./tile";
 import * as cards from "./cards";
 import * as b from "./board";
 
+function getRandom<T>(list:T[]){
+    if (list.length !== 0){
+        const len = list.length;
+        const index = Math.floor(Math.random() * len);
+        return list[index];
+    }
+    else {
+        return undefined
+    }
+}
+
 
 const deck = new cards.deck;
 const board = new b.board;
@@ -15,10 +26,12 @@ while (turn_tuple !== false)
 
     if (turn_tuple.turn === 1){
         console.log(t)        
-        board.place(0,0,t)
+        board.place(38,38,t)
     }
     else{
-        let loc = board.getAdjacencies().find(p => board.canPlace(p.x, p.y, t))
+        let locs = board.getOptions().filter(p => board.canPlace(p.x, p.y, t));
+        const loc = getRandom(locs);
+
         if (loc !== undefined){
             console.log(loc.x, loc.y, t.value)
             board.place(loc.x, loc.y, t)
@@ -29,9 +42,7 @@ while (turn_tuple !== false)
 
 
     console.log("---")
-    //console.log(board.toString())
-    console.log(board.tileTurnsToString())
-
+    console.log(board.boardToString())
  
 
 }

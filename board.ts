@@ -9,12 +9,11 @@ export class board {
 
     heightmap : number[][] = [];
 
-    //tileturns is een even grote array en die geeft weer welke tegel er ligt,
-    //door van de bovenste tegen de id op te slaan. de id is het 'turn'nummer
-    //de eerste tegel is 1, de tweede 2 etc.
-    //dat is nodig om te bepalen of er niet op 1 tegel gestapeld wordt 
+    // tileturns is een even grote array en die geeft weer welke tegel er ligt,
+    // dmv het hele tegelobject
+    // dat is nodig om te bepalen of er niet op 1 tegel gestapeld wordt 
 
-    tileTurns : number[][] = [];
+    tileTurns : Tile[][] = [];
 
     public constructor()
         {
@@ -23,73 +22,78 @@ export class board {
                 this.tileTurns[i] = [];
                 for (let j = 0; j < 80; j++){
                     this.heightmap[i][j] = 0
-                    this.tileTurns[i][j] = 0 
+                    this.tileTurns[i][j] = undefined
                 }   
             }
         }
 
-    public getAdjacencies(){
-        const adjacencies = [];
-        for (let y = 0; y < 80; y++){
-            for (let x = 0; x < 80; x++){
-                if (this.heightmap[y][x] == -1){
-                    adjacencies.push({x,y})
+    public getOptions(){
+        const options = [];
+        for (let y = 0; y < 74; y++){
+            for (let x = 0; x < 75; x++){
+                if (this.heightmap[y][x] < 1){
+                    options.push({x,y})
                 }
             }
         }
-
-
-        return adjacencies;
+        return options;
     }
 
 
     public place(i:number, j:number,  tile:Tile) //TODO: er moet hier nog een orientatie bij
     {
-        for (let y = 0; y < 5; y++){
+        for (let y = 0; y < 6; y++){
             for (let x = 0; x < 5; x++){
-                const formIsNonEmpty = tile.form[y][x] !== 0;
-                const boardSpaceFree = this.heightmap[j+y][i+x] < 1; // TODO: Klopt niet meer op hoger niveau
-                if (formIsNonEmpty && boardSpaceFree) {
-                    this.heightmap[j+y][i+x] = tile.form[y][x] //TODO: iets komt nu altijd op level 1 terecht
-                }
-                
-                const isOne = tile.form[y][x] === 1
-                if (isOne){
-                    this.tileTurns[j+y][i+x] = tile.turn
+                const isSolid = tile.form[y][x] === 1;
+                if (isSolid) {
+                    this.heightmap[j+y][i+x] += 1
+                    this.tileTurns[j+y][i+x] = tile
                 }
             }   
         }
-
-
-
-
     }
 
     public canPlace(x:number, y:number,  tile:Tile) //TODO: er moet hier nog een orientatie bij
     {
-        //TODO: hoger niveau v-tjes
+        const self = this;
+        function heightMapValue(p: {x: number, y: number}) {
+            return self.heightmap[y+p.y][x+p.x];
+        }
 
-
-
-        //TODO de vergelijking met -1 moet nog in een functie (want op hogere niveaus gaan we de vrijheid met een ander getal coderen)
-
-        const below:number[] = tile.getOnes().map(p => this.heightmap[y+p.y][x+p.x]) //een lijst van alle element die 'onder' deze form ligt
-
-        //is minstens een van de vakjes die in de form een 1 is, in de heightmap een v (en dat is in de datastructuur een -1)
-        const touchesV:boolean = below.some(x => x === -1)
+        const below:number[] = tile.getOnes().map(heightMapValue) //een lijst van alle element die 'onder' deze form ligt
 
         //lig ik 'recht' aka zijn alle getallen onder de form in de heightmap hetzelfde getal?
 
         const formBelow:number[] = below.filter(x => x !== -1) //eerst alle non-v's eruit filteren
 
-        const expectedLevel = 0; // formBelow[0] // TODO: Klopt niet meer vanaf tweede verdieping
-        const balanced:boolean = formBelow.length === 0 || formBelow.every(x => x === expectedLevel) //dan kijken of alle elementen hetzelfde zin als het eerste
+        const supportingLevel = formBelow[0] 
+        const balanced:boolean = formBelow.length === 0 || formBelow.every(x => x === supportingLevel) //dan kijken of alle elementen hetzelfde zin als het eerste
 
-        return touchesV && balanced
+        //if we are placing the first tile of a new level (aka the lower level is currently the highst)
+        //touching is not a requirement (it is touching from below haha!)
+        if (supportingLevel === this.maxHeight()){
+            return balanced;
+        }
+        else{
+            //is minstens een van de vakjes die in de form een v is, in de heightmap gelijk aan het gewenste level (supporting level + 1)
+            const touchesV:boolean = tile.getAdjacencies().map(heightMapValue).some(x => x === supportingLevel + 1);
+
+            return touchesV && balanced
+        }
 
         // TODO: als we op een hogere verdieping liggen, moeten er minstens 2 instanties (turn-numbers) onder liggen
+    }
 
-
+    public maxHeight(){
+        let max = -1;
+        for (let y = 0; y < 80; y++){
+            for (let x = 0; x < 80; x++){
+                if (this.heightmap[y][x] > max){
+                    max = this.heightmap[y][x]
+                }
+            }
+        }
+        return max;
     }
 
 
@@ -107,12 +111,13 @@ export class board {
                     if (this.heightmap[y][x] === -1)
                         line += 'v'
                     else {
-                        const tileNr = this.heightmap[y][x]; // TODO: Niet het echte nummer!
+
                         const height = this.heightmap[y][x];
 
                         if (height === 0) {
                             line += chalk.hex('#5C5C5C')('0');
                         } else {
+                            const tileNr = this.tileTurns[y][x].value; 
                             line += chalk.hex(TILE_COLORS[tileNr])(height);
                         }
                     }
@@ -123,22 +128,7 @@ export class board {
         return board;
     }
 
-    //zie instagramfoto van 24 november!
-    public tileTurnsToString(){
-        let board: string = ""
-        for (let y = 0; y < 80; y++){
-            let line: string = ""
-            if (!this.tileTurns[y].every(x => x === 0))
-            {
-                for (let x = 0; x < 80; x++){
-                    line += this.tileTurns[y][x]
-                
-                }
-                board += line + "\n";
-            }
-        }
-        return board;
-    }
+
 }
 
 

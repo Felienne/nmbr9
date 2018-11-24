@@ -1,5 +1,7 @@
 import { toASCII } from "punycode";
 
+const v = -1;
+
 export class Tile {
     public value: number;
     public form: number[][];
@@ -8,16 +10,23 @@ export class Tile {
                              // since there is only one tile per turn, this serves as identity
 
     public getOnes(){
-        const ones = [];
+        return this.getNumberLocations(1);
+    }
+    
+    public getAdjacencies() {
+        return this.getNumberLocations(v);
+    }
+
+    private getNumberLocations(num: number){
+        const ret = [];
         for (let y = 0; y < 6; y++){
             for (let x = 0; x < 5; x++){
-                if (this.form[y][x] === 1){
-                    ones.push({y,x});
-                    //TODO: iets komt nu altijd op level 1 terecht
-                } //TODO: Ook nog zorgen dat je geen 1'tjes overschrijft met vtjes.
+                if (this.form[y][x] === num){
+                    ret.push({y,x});
+                }
             }
         }
-        return ones;
+        return ret;
     }
 }
 
@@ -40,7 +49,6 @@ export function getTile(n:number): Tile
 
     let t = new Tile;
     t.value = n;
-    const v = -1;
 
     switch(n) {
         case 0: {
