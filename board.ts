@@ -2,21 +2,27 @@ import { Tile } from "./tile";
 
 
 export class board {
+    //we gebruiken 2 losse datastructuren om het bord te representeren
+    //heightmap zet op ieder veld de hoogte van die plek, hoeveel lagen liggen er al op
+    //0 is een leeg vakje 
+    //-1 geeft aan dat er daar aangesloten kan worden (in de visualisatie weergegeven met 'v')
+
     heightmap : number[][] = [];
+
+    //tileturns is een even grote array en die geeft weer welke tegel er ligt,
+    //door van de bovenste tegen de id op te slaan. de id is het 'turn'nummer
+    //de eerste tegel is 1, de tweede 2 etc.
+    //dat is nodig om te bepalen of er niet op 1 tegel gestapeld wordt 
+
     tileTurns : number[][] = [];
 
     public constructor()
         {
             for (let i = 0; i < 80; i++){
                 this.heightmap[i] = [];
-                for (let j = 0; j < 80; j++){
-                    this.heightmap[i][j] = 0
-                }   
-            }
-
-            for (let i = 0; i < 80; i++){
                 this.tileTurns[i] = [];
                 for (let j = 0; j < 80; j++){
+                    this.heightmap[i][j] = 0
                     this.tileTurns[i][j] = 0 
                 }   
             }
@@ -46,10 +52,17 @@ export class board {
                 if (formIsNonEmpty && boardSpaceFree) {
                     this.heightmap[j+y][i+x] = tile.form[y][x] //TODO: iets komt nu altijd op level 1 terecht
                 }
+                
+                const isOne = tile.form[y][x] === 1
+                if (isOne){
+                    this.tileTurns[j+y][i+x] = tile.turn
+                }
             }   
         }
 
-        
+
+
+
     }
 
     public canPlace(x:number, y:number,  tile:Tile) //TODO: er moet hier nog een orientatie bij
@@ -84,7 +97,7 @@ export class board {
 
 
 
-    public toString(){
+    public boardToString(){
         let board: string = ""
         for (let y = 0; y < 80; y++){
             let line: string = ""
@@ -95,6 +108,23 @@ export class board {
                         line += 'v'
                     else
                         line += this.heightmap[y][x]
+                
+                }
+                board += line + "\n";
+            }
+        }
+        return board;
+    }
+
+    //zie instagramfoto van 24 november!
+    public tileTurnsToString(){
+        let board: string = ""
+        for (let y = 0; y < 80; y++){
+            let line: string = ""
+            if (!this.tileTurns[y].every(x => x === 0))
+            {
+                for (let x = 0; x < 80; x++){
+                    line += this.tileTurns[y][x]
                 
                 }
                 board += line + "\n";

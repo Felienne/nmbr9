@@ -9,9 +9,9 @@ const board = new b.board;
 let turn_tuple  = deck.draw()
 while (turn_tuple !== false)
 {
-
     const value = turn_tuple.value;
     let t:tile.Tile = tile.getTile(value);
+    t.turn = turn_tuple.turn;
 
     if (turn_tuple.turn === 1){
         console.log(t)        
@@ -26,10 +26,11 @@ while (turn_tuple !== false)
     }
     turn_tuple = deck.draw();
 
-    // t.turn = turn
+
 
     console.log("---")
-    console.log(board.toString())
+    //console.log(board.toString())
+    console.log(board.tileTurnsToString())
 
  
 
