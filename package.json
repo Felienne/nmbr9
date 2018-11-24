@@ -5,6 +5,7 @@
   "main": "game.js",
   "scripts": {
     "build": "tsc",
+    "go": "tsc && node game",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
