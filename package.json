@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/Felienne/-nmbr9/issues"
   },
-  "homepage": "https://github.com/Felienne/-nmbr9#readme"
+  "homepage": "https://github.com/Felienne/-nmbr9#readme",
+  "devDependencies": {
+    "@types/node": "^10.12.10",
+    "typescript": "^3.1.6"
+  }
 }

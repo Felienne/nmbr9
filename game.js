@@ -1,7 +1,8 @@
 "use strict";
-exports.__esModule = true;
-var cards = require("./cards");
-var c = new cards.cards;
+Object.defineProperty(exports, "__esModule", { value: true });
+const cards = require("./cards");
+let c = new cards.cards;
 while (!c.nextTurn() == false) {
     console.log(c.getCard());
 }
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZ2FtZS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbImdhbWUudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFDQSxpQ0FBaUM7QUFHakMsSUFBSSxDQUFDLEdBQUcsSUFBSSxLQUFLLENBQUMsS0FBSyxDQUFDO0FBRXhCLE9BQU8sQ0FBQyxDQUFDLENBQUMsUUFBUSxFQUFFLElBQUksS0FBSyxFQUM3QjtJQUNJLE9BQU8sQ0FBQyxHQUFHLENBQUMsQ0FBQyxDQUFDLE9BQU8sRUFBRSxDQUFDLENBQUM7Q0FDNUIiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgKiBhcyB0aWxlIGZyb20gXCIuL3RpbGVcIjtcbmltcG9ydCAqIGFzIGNhcmRzIGZyb20gXCIuL2NhcmRzXCI7XG5cblxubGV0IGMgPSBuZXcgY2FyZHMuY2FyZHM7XG5cbndoaWxlICghYy5uZXh0VHVybigpID09IGZhbHNlKVxue1xuICAgIGNvbnNvbGUubG9nKGMuZ2V0Q2FyZCgpKTtcbn1cbiJdfQ==
