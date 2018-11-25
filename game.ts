@@ -15,7 +15,7 @@ function getRandom<T>(list:T[]){
 
 
 const deck = new cards.deck;
-const board = new b.board;
+const board = new b.Board;
 
 let turn_tuple  = deck.draw()
 
@@ -42,7 +42,7 @@ console.log(board.boardToString())
 //     t.turn = turn_tuple.turn;
 
 //     if (turn_tuple.turn === 1){
-//         console.log(t)        
+//         console.log(t)
 //         board.place(38,38,t)
 //     }
 //     else{
@@ -58,6 +58,6 @@ console.log(board.boardToString())
 
 //     console.log("---")
 //     console.log(board.boardToString())
- 
+
 // }
 
