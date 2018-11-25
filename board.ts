@@ -1,7 +1,16 @@
 const chalk = require('chalk');
 import { Tile, TILE_COLORS } from "./tile";
 
+export enum Direction {
+    Up = 1, //dit is 'rechtop'
+    Right, //met de bovenkant richtend naar rechts etc.
+    Down,
+    Left
+}
+
 export class board {
+
+
     //we gebruiken 2 losse datastructuren om het bord te representeren
     //heightmap zet op ieder veld de hoogte van die plek, hoeveel lagen liggen er al op
     //0 is een leeg vakje 
@@ -40,30 +49,30 @@ export class board {
     }
 
 
-    public place(i:number, j:number,  tile:Tile) //TODO: er moet hier nog een orientatie bij
+    public place(i:number, j:number,  tile:Tile, d:Direction) 
     {
-        for (let y = 0; y < 6; y++){
-            for (let x = 0; x < 5; x++){
-                const isSolid = tile.form[y][x] === 1;
-                if (isSolid) {
-                    this.heightmap[j+y][i+x] += 1
-                    this.tileTurns[j+y][i+x] = tile
-                }
-            }   
-        }
+        const ones = tile.getOnes(d);
+        ones.forEach(p => {
+            this.heightmap[j+p.y][i+p.x] += 1;
+            this.tileTurns[j+p.y][i+p.x] = tile;
+        });
     }
 
-    public canPlace(x:number, y:number,  tile:Tile) //TODO: er moet hier nog een orientatie bij
+    public canPlace(x:number, y:number,  tile:Tile, direction: Direction) //TODO: er moet hier nog een orientatie bij
     {
+
+
+
         const self = this;
         function heightMapValue(p: {x: number, y: number}) {
             return self.heightmap[y+p.y][x+p.x];
         }
+
         function tileTurnsValue(p: {x: number, y: number}) {
             return self.tileTurns[y+p.y][x+p.x];
         }       
 
-        const below:number[] = tile.getOnes().map(heightMapValue) //een lijst van alle element die 'onder' deze form ligt
+        const below:number[] = tile.getOnes(direction).map(heightMapValue) //een lijst van alle element die 'onder' deze form ligt
 
         //lig ik 'recht' aka zijn alle getallen onder de form in de heightmap hetzelfde getal?
 
@@ -75,7 +84,7 @@ export class board {
         // als we op een hogere verdieping liggen (niet 0), dan moeten er minstens 2 instanties (turn-numbers) onder liggen
 
         //we kijken in tileTurns wat er onder deze tegel komt te liggen
-        const tileTurnsBelow:number[] = tile.getOnes().map(tileTurnsValue).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
+        const tileTurnsBelow:number[] = tile.getOnes(direction).map(tileTurnsValue).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
 
         console.log(tileTurnsBelow)
         //we gebruiken een truukje vergelikjbaar met wat we bij balanced doen
@@ -92,7 +101,7 @@ export class board {
         }
         else{
             //is minstens een van de vakjes die in de form een v is, in de heightmap gelijk aan het gewenste level (supporting level + 1)
-            const touchesV:boolean = tile.getAdjacencies().map(heightMapValue).some(x => x === supportingLevel + 1);
+            const touchesV:boolean = tile.getAdjacencies(direction).map(heightMapValue).some(x => x === supportingLevel + 1);
 
             return touchesV && balanced && onTwoTiles;
         }

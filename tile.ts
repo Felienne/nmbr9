@@ -1,4 +1,5 @@
 import { toASCII } from "punycode";
+import { Direction } from "./board";
 
 const v = -1;
 
@@ -9,20 +10,35 @@ export class Tile {
                              // of the same number, since it is not allowed to place a tile on one instance.
                              // since there is only one tile per turn, this serves as identity
 
-    public getOnes(){
-        return this.getNumberLocations(1);
+    public getOnes(d:Direction){
+        return this.getNumberLocations(1, d);
     }
     
-    public getAdjacencies() {
-        return this.getNumberLocations(v);
+    public getAdjacencies(d:Direction) {
+        return this.getNumberLocations(v, d);
     }
 
-    private getNumberLocations(num: number){
+
+    private getNumberLocations(num: number, d:Direction){
         const ret = [];
         for (let y = 0; y < 6; y++){
             for (let x = 0; x < 5; x++){
                 if (this.form[y][x] === num){
-                    ret.push({y,x});
+                    switch (d) {
+                        case Direction.Up:
+                            ret.push({y:y,x:x});
+                            break;
+                        case Direction.Right:
+                            ret.push({y:x,x:4-y});
+                            break;
+                        case Direction.Down:
+                            ret.push({x:5-x,y:4-y});
+                        break;
+                            break;
+                        case Direction.Left:
+                            ret.push({y:5-x,x:y});
+                            break;
+                    }
                 }
             }
         }

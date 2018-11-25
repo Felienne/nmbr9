@@ -19,19 +19,20 @@ const board = new b.board;
 
 let turn_tuple  = deck.draw()
 
-let t:tile.Tile = tile.getTile(9);
+let t:tile.Tile = tile.getTile(1);
 t.turn = 1
-board.place(38,38,t)
+board.place(0,38,t, b.Direction.Up)
 console.log(board.boardToString())
 
-let t2:tile.Tile = tile.getTile(1);
+let t2:tile.Tile = tile.getTile(9);
 t2.turn = 2
-board.place(36,38,t2)
+board.place(2,38,t2,b.Direction.Up)
 console.log(board.boardToString())
 
-let t3:tile.Tile = tile.getTile(8);
+let t3:tile.Tile = tile.getTile(6);
 t3.turn = 3
-console.log(board.canPlace(37,38,t3))
+console.log(board.canPlace(2,38,t3, b.Direction.Right))
+board.place(2,38,t3,b.Direction.Right)
 console.log(board.boardToString())
 
 // while (turn_tuple !== false)
