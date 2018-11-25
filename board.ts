@@ -59,6 +59,9 @@ export class board {
         function heightMapValue(p: {x: number, y: number}) {
             return self.heightmap[y+p.y][x+p.x];
         }
+        function tileTurnsValue(p: {x: number, y: number}) {
+            return self.tileTurns[y+p.y][x+p.x];
+        }       
 
         const below:number[] = tile.getOnes().map(heightMapValue) //een lijst van alle element die 'onder' deze form ligt
 
@@ -69,19 +72,31 @@ export class board {
         const supportingLevel = formBelow[0] 
         const balanced:boolean = formBelow.length === 0 || formBelow.every(x => x === supportingLevel) //dan kijken of alle elementen hetzelfde zin als het eerste
 
+        // als we op een hogere verdieping liggen (niet 0), dan moeten er minstens 2 instanties (turn-numbers) onder liggen
+
+        //we kijken in tileTurns wat er onder deze tegel komt te liggen
+        const tileTurnsBelow:number[] = tile.getOnes().map(tileTurnsValue).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
+
+        console.log(tileTurnsBelow)
+        //we gebruiken een truukje vergelikjbaar met wat we bij balanced doen
+        //we pakken element 0, en er moet er minstens eentje anders zijn dan elem 1 
+        //anders zijn ze allemaal hetzelfde
+        const firstTurn = tileTurnsBelow[0]
+        const onTwoTiles = tileTurnsBelow.length === 0 || tileTurnsBelow.some(x => x !== firstTurn)
+
+
         //if we are placing the first tile of a new level (aka the lower level is currently the highst)
         //touching is not a requirement (it is touching from below haha!)
         if (supportingLevel === this.maxHeight()){
-            return balanced;
+            return balanced && onTwoTiles;
         }
         else{
             //is minstens een van de vakjes die in de form een v is, in de heightmap gelijk aan het gewenste level (supporting level + 1)
             const touchesV:boolean = tile.getAdjacencies().map(heightMapValue).some(x => x === supportingLevel + 1);
 
-            return touchesV && balanced
+            return touchesV && balanced && onTwoTiles;
         }
 
-        // TODO: als we op een hogere verdieping liggen, moeten er minstens 2 instanties (turn-numbers) onder liggen
     }
 
     public maxHeight(){

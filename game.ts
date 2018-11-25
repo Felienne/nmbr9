@@ -18,32 +18,45 @@ const deck = new cards.deck;
 const board = new b.board;
 
 let turn_tuple  = deck.draw()
-while (turn_tuple !== false)
-{
-    const value = turn_tuple.value;
-    let t:tile.Tile = tile.getTile(value);
-    t.turn = turn_tuple.turn;
 
-    if (turn_tuple.turn === 1){
-        console.log(t)        
-        board.place(38,38,t)
-    }
-    else{
-        let locs = board.getOptions().filter(p => board.canPlace(p.x, p.y, t));
-        const loc = getRandom(locs);
+let t:tile.Tile = tile.getTile(9);
+t.turn = 1
+board.place(38,38,t)
+console.log(board.boardToString())
 
-        if (loc !== undefined){
-            console.log(loc.x, loc.y, t.value)
-            board.place(loc.x, loc.y, t)
-        }
-    }
-    turn_tuple = deck.draw();
+let t2:tile.Tile = tile.getTile(1);
+t2.turn = 2
+board.place(36,38,t2)
+console.log(board.boardToString())
 
+let t3:tile.Tile = tile.getTile(8);
+t3.turn = 3
+console.log(board.canPlace(37,38,t3))
+console.log(board.boardToString())
 
+// while (turn_tuple !== false)
+// {
+//     const value = turn_tuple.value;
+//     let t:tile.Tile = tile.getTile(value);
+//     t.turn = turn_tuple.turn;
 
-    console.log("---")
-    console.log(board.boardToString())
+//     if (turn_tuple.turn === 1){
+//         console.log(t)        
+//         board.place(38,38,t)
+//     }
+//     else{
+//         let locs = board.getOptions().filter(p => board.canPlace(p.x, p.y, t));
+//         const loc = getRandom(locs);
+
+//         if (loc !== undefined){
+//             console.log(loc.x, loc.y, t.value)
+//             board.place(loc.x, loc.y, t)
+//         }
+//     }
+//     turn_tuple = deck.draw();
+
+//     console.log("---")
+//     console.log(board.boardToString())
  
-
-}
+// }
 
