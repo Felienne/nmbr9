@@ -13,6 +13,25 @@ test('maxHeight is 1 after placing a stone', () => {
     expect(board.maxHeight()).toBe(1);
 });
 
+test('canPlace outside board domain returns false', () => {
+    // GIVEN
+    const board = new Board();
+
+    // THEN
+    expect(board.canPlace(getTile(1), { x: 85, y: 85, direction: Direction.Up })).toBeFalsy();
+});
+
+test('canPlace outside board domain returns false, also when checking adjacencies', () => {
+    // GIVEN
+    const board = new Board();
+
+    // WHEN
+    board.place(getTile(5), { x: 0, y: 0, direction: Direction.Up });
+
+    // THEN
+    expect(board.canPlace(getTile(1), { x: 85, y: 85, direction: Direction.Up })).toBeFalsy();
+});
+
 test('cannot place an 8 fully on top of a single 9', () => {
     // GIVEN
     const board = new Board();

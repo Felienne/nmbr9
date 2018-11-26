@@ -67,16 +67,22 @@ export class Board {
      * Return whether the given tile can be placed here
      */
     public canPlace(tile: Tile, placement: Placement) {
-        const self = this;
-        function heightMapValue(p: {x: number, y: number}) {
-            return self.heightmap[placement.y+p.y][placement.x+p.x];
-        }
+        // Make a point relative to placement absolute on the board
+        const onBoard = (p: Point) => ({ x: p.x + placement.x, y: p.y + placement.y });
+        // Return the heightmap at a certain (absolute) point
+        const heightMapValue = (p: Point) => this.heightmap[p.y][p.x];
+        // Return the tileTurns at a certain (absolute) point
+        const tileTurnsValue = (p: Point) => this.tileTurns[p.y][p.x];
 
-        function tileTurnsValue(p: {x: number, y: number}) {
-            return self.tileTurns[placement.y+p.y][placement.x+p.x];
-        }
+        const boardLocations = tile.getOnes(placement.direction).map(onBoard);
 
-        const below: number[] = tile.getOnes(placement.direction).map(heightMapValue) //een lijst van alle element die 'onder' deze form ligt
+        // Return false if there are any boardLocations outside the actual board
+        const xs = boardLocations.map(p => p.x);
+        const ys = boardLocations.map(p => p.y);
+        if (Math.min(...xs) < 0 || Math.max(...xs) >= 80) { return false; }
+        if (Math.min(...ys) < 0 || Math.max(...ys) >= 80) { return false; }
+
+        const below: number[] = boardLocations.map(heightMapValue) //een lijst van alle element die 'onder' deze form ligt
 
         //lig ik 'recht' aka zijn alle getallen onder de form in de heightmap hetzelfde getal?
 
@@ -88,7 +94,7 @@ export class Board {
         // als we op een hogere verdieping liggen (niet 0), dan moeten er minstens 2 instanties (turn-numbers) onder liggen
 
         //we kijken in tileTurns wat er onder deze tegel komt te liggen
-        const tileTurnsBelow: number[] = tile.getOnes(placement.direction).map(tileTurnsValue).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
+        const tileTurnsBelow: number[] = boardLocations.map(tileTurnsValue).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
 
         //we gebruiken een truukje vergelikjbaar met wat we bij balanced doen
         //we pakken element 0, en er moet er minstens eentje anders zijn dan elem 1
@@ -164,4 +170,7 @@ export interface Placement {
     direction: Direction;
 }
 
-
+export interface Point {
+    x: number;
+    y: number;
+}
