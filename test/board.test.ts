@@ -74,4 +74,51 @@ test('can place an 8 on top of a combination of a 1 and a 9', () => {
     //  .889...
 
     // console.log(board.boardToString());
+})
+
+test('empty board had no score', () => {
+    // GIVEN
+    const board = new Board();
+
+    // WHEN
+
+    // THEN
+    expect(board.score()).toBe(0);
 });
+
+test('place 8, score is 0', () => {
+    // GIVEN
+    const board = new Board();
+
+    // WHEN
+    const t8 = getTile(8);
+    board.place(t8, { x: 0, y: 0, direction: Direction.Up });    
+
+    // THEN
+    expect(board.score()).toBe(0);
+});
+
+test('8 on the first level, score 8', () => {
+    // GIVEN
+    const board = new Board();
+
+    const t9 = getTile(9);
+    t9.turn = 1;
+    board.place(t9, { x: 1, y: 0, direction: Direction.Up });
+
+    const t1 = getTile(1);
+    t1.turn = 2;
+    board.place(t1, { x: -1, y: 0, direction: Direction.Up });
+
+    // WHEN
+    const t8 = getTile(8);
+    t8.turn = 3;
+    board.place(t8, { x: 0, y: 0, direction: Direction.Up })
+
+    // THEN
+    expect(board.score()).toBe(8);
+})
+
+
+
+;

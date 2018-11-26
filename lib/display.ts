@@ -4,7 +4,7 @@ import { range } from "./util";
 /**
  * Return a nice colorized stringification of the board
  */
-export function displayBoard(board: BoardLike) {
+export function displayBoard(board: IBoard) {
     const span = range(80);
 
     const lines: string[] = [];
@@ -24,7 +24,7 @@ export function displayBoard(board: BoardLike) {
     return lines.join('\n') + '\n';
 }
 
-interface BoardLike {
+interface IBoard {
     heightAt(x: number, y: number): number;
     tileValueAt(x: number, y: number): number;
 }

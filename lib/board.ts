@@ -8,6 +8,9 @@ export enum Direction {
 }
 
 export class Board {
+
+    private _score : number = 0;
+
     //we gebruiken 2 losse datastructuren om het bord te representeren
     //heightmap zet op ieder veld de hoogte van die plek, hoeveel lagen liggen er al op
     //0 is een leeg vakje
@@ -60,6 +63,14 @@ export class Board {
             this.heightmap[place.y+p.y][place.x+p.x] += 1;
             this.tileTurns[place.y+p.y][place.x+p.x] = tile;
         });
+
+        // als we kunnen plaatsen, dan gaan we meteen de score updaten
+        // tegels op de bodem zijn 0 waard dus we moeten de hoogte - 1 nemen
+        // om te weten heo hoog iets ligt, kijken we naar de hoogte van 1 van de eentjes
+        // we weten dankzij de call naar canPlace toch zeker dat dat allemaal dezelfde hoogte is
+        const p = ones[0];
+        const placementHeight = this.heightmap[place.y + p.y][place.x + p.x] - 1;
+        this._score += placementHeight * tile.value;
     }
 
     /**
@@ -114,6 +125,12 @@ export class Board {
         }
     }
 
+
+    public score(){
+        return this._score;
+    }
+
+
     /**
      * Return the maximum height of tiles on the board
      */
@@ -136,6 +153,7 @@ export class Board {
     public tileValueAt(x: number, y: number): number {
         return this.tileTurns[y][x].value;
     }
+
 }
 
 /**
