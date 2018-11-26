@@ -5,8 +5,8 @@
   "main": "game.js",
   "scripts": {
     "build": "tsc",
-    "go": "tsc && node game",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "go": "tsc && node main",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -19,7 +19,11 @@
   },
   "homepage": "https://github.com/Felienne/-nmbr9#readme",
   "devDependencies": {
+    "@types/jest": "^23.3.9",
     "@types/node": "^10.12.10",
+    "fast-check": "^1.7.1",
+    "jest": "^23.6.0",
+    "ts-jest": "^23.10.5",
     "typescript": "^3.1.6"
   },
   "dependencies": {
