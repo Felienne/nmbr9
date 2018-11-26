@@ -3,6 +3,7 @@ import { Deck } from "./cards";
 import { Board } from "./board";
 import { getTile } from "./tile";
 import { Timer } from "./util";
+import { displayBoard } from "./display";
 
 /**
  * A single round of the game
@@ -69,7 +70,7 @@ export class Game {
             console.log(`SPEED:  ${player.timer.average.toPrecision(3)}ms/turn`);
             // FIXME: Score
             console.log('BOARD:');
-            console.log(player.board.boardToString());
+            console.log(displayBoard(player.board));
             console.log('');
         }
     }

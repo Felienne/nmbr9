@@ -1,5 +1,4 @@
-const chalk = require('chalk');
-import { Tile, TILE_COLORS } from "./tile";
+import { Tile } from "./tile";
 
 export enum Direction {
     Up = 1, //dit is 'rechtop'
@@ -130,34 +129,12 @@ export class Board {
         return max;
     }
 
-    /**
-     * Return a nice colorized stringification of the board
-     */
-    public boardToString() {
-        let board: string = ""
-        for (let y = 0; y < 80; y++){
-            let line: string = ""
-            if (!this.heightmap[y].every(x => x === 0))
-            {
-                for (let x = 0; x < 80; x++){
-                    if (this.heightmap[y][x] === -1)
-                        line += 'v'
-                    else {
+    public heightAt(x: number, y: number): number {
+        return this.heightmap[y][x];
+    }
 
-                        const height = this.heightmap[y][x];
-
-                        if (height === 0) {
-                            line += chalk.hex('#5C5C5C')('.');
-                        } else {
-                            const tileNr = this.tileTurns[y][x].value;
-                            line += chalk.hex(TILE_COLORS[tileNr])(height);
-                        }
-                    }
-                }
-                board += line + "\n";
-            }
-        }
-        return board;
+    public tileValueAt(x: number, y: number): number {
+        return this.tileTurns[y][x].value;
     }
 }
 

@@ -32,3 +32,16 @@ export class Timer {
         return this.totalMillis / this.increments;
     }
 }
+
+/**
+ * Return the numbers [0..n)
+ */
+export function range(n: number): number[] {
+    const ret: number[] = [];
+
+    for (let i = 0; i < n; i++) {
+        ret.push(i);
+    }
+
+    return ret;
+}

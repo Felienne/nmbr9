@@ -45,21 +45,7 @@ export class Tile {
     }
 }
 
-export const TILE_COLORS = [
-    '#BABABA', // 0
-    '#9C7300', // 1
-    '#BD6B0D', // 2
-    '#F2DB27', // 3
-    '#559E1C', // 4
-    '#4AD1D4', // 5
-    '#336FF2', // 6
-    '#9C0FD4', // 7
-    '#E820E8', // 8
-    '#D42242', // 9
-];
-
-export function getTile(n:number): Tile
-{
+export function getTile(n:number): Tile {
     if (n<0 || n>9) throw new Error('Value of a tile can only be from 0 to 9.');
 
     let t = new Tile;
