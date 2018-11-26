@@ -1,4 +1,3 @@
-import { toASCII } from "punycode";
 import { Direction } from "./board";
 
 const v = -1;
@@ -13,7 +12,7 @@ export class Tile {
     public getOnes(d:Direction){
         return this.getNumberLocations(1, d);
     }
-    
+
     public getAdjacencies(d:Direction) {
         return this.getNumberLocations(v, d);
     }

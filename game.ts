@@ -1,6 +1,6 @@
-import * as tile from "./tile";
-import * as cards from "./cards";
-import * as b from "./board";
+import * as tile from "./lib/tile";
+import * as cards from "./lib/cards";
+import * as b from "./lib/board";
 
 function getRandom<T>(list:T[]){
     if (list.length !== 0){
