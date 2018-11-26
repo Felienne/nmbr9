@@ -5,7 +5,7 @@
   "main": "game.js",
   "scripts": {
     "build": "tsc",
-    "go": "tsc && node game",
+    "go": "tsc && node main",
     "test": "jest"
   },
   "repository": {
@@ -21,6 +21,7 @@
   "devDependencies": {
     "@types/jest": "^23.3.9",
     "@types/node": "^10.12.10",
+    "fast-check": "^1.7.1",
     "jest": "^23.6.0",
     "ts-jest": "^23.10.5",
     "typescript": "^3.1.6"
