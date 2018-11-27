@@ -42,9 +42,7 @@ export class Board {
         const options = [];
         for (let y = 0; y < 74; y++) {
             for (let x = 0; x < 75; x++) {
-                if (this.heightmap[y][x] < 1) {
                     options.push({x,y});
-                }
             }
         }
         return options;
@@ -77,12 +75,14 @@ export class Board {
      * Return whether the given tile can be placed here
      */
     public canPlace(tile: Tile, placement: Placement) {
+        const self = this;
+        
         // Make a point relative to placement absolute on the board
         const onBoard = (p: Point) => ({ x: p.x + placement.x, y: p.y + placement.y });
         // Return the heightmap at a certain (absolute) point
-        const heightMapValue = (p: Point) => this.heightmap[p.y][p.x];
+        const heightMapValue = (p: Point) => self.heightmap[p.y][p.x];
         // Return the tileTurns at a certain (absolute) point
-        const tileTurnsValue = (p: Point) => this.tileTurns[p.y][p.x];
+        const tileTurnsValue = (p: Point) => self.tileTurns[p.y][p.x];
 
         const boardLocations = tile.getOnes(placement.direction).map(onBoard);
 
@@ -106,7 +106,7 @@ export class Board {
         //we kijken in tileTurns wat er onder deze tegel komt te liggen
         const tileTurnsBelow: number[] = boardLocations.map(tileTurnsValue).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
 
-        //we gebruiken een truukje vergelikjbaar met wat we bij balanced doen
+        //we gebruiken een truukje vergelijkbaar met wat we bij balanced doen
         //we pakken element 0, en er moet er minstens eentje anders zijn dan elem 1
         //anders zijn ze allemaal hetzelfde
         const firstTurn = tileTurnsBelow[0]
@@ -117,9 +117,9 @@ export class Board {
         if (supportingLevel === this.maxHeight()){
             return balanced && onTwoTiles;
         }
-        else{
+        else{            
             //is minstens een van de vakjes die in de form een v is, in de heightmap gelijk aan het gewenste level (supporting level + 1)
-            const touchesV:boolean = tile.getAdjacencies(placement.direction).map(heightMapValue).some(x => x === supportingLevel + 1);
+            const touchesV:boolean = tile.getAdjacencies(placement.direction).map(onBoard).map(heightMapValue).some(x => x === supportingLevel + 1);
 
             return touchesV && balanced && onTwoTiles;
         }

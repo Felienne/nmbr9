@@ -86,6 +86,20 @@ test('empty board had no score', () => {
     expect(board.score()).toBe(0);
 });
 
+test('empty board has many possible positions', () => {
+    // GIVEN
+    const board = new Board();
+
+    // WHEN
+    const options = board.getOptions();
+
+    // THEN
+    expect(options.length).toBeGreaterThan(0);
+});
+
+
+
+
 test('place 8, score is 0', () => {
     // GIVEN
     const board = new Board();
@@ -118,6 +132,22 @@ test('8 on the first level, score 8', () => {
     // THEN
     expect(board.score()).toBe(8);
 })
+
+
+test('place 9, should be able to place another 9 next to it', () => {
+    // GIVEN
+    const board = new Board();
+
+    // WHEN
+    const t9 = getTile(9);
+    board.place(t9, { x: 11, y: 16, direction: Direction.Up });
+
+    const t9_2 = getTile(9);
+    let allowed = board.canPlace(t9_2, {x:14, y:16, direction: Direction.Up});
+
+    // THEN
+    expect(allowed).toBe(true);
+});
 
 
 

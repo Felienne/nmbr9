@@ -34,6 +34,8 @@ export class Game {
 
             const tile = getTile(value);
             tile.turn = turn;
+            console.log("Turn", turn);
+            console.log("Placing tile of value", value);
 
             // Give all non-disqualified players a chance to move
             for (const player of this.players) {
