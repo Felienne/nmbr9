@@ -56,6 +56,7 @@ export class Game {
                 } catch(e) {
                     player.disqualified = true;
                     player.disqualificationReason = e.message;
+                    console.log(e);
                 } finally {
                     player.timer.end();
                 }

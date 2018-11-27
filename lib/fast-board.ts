@@ -102,7 +102,7 @@ export class FastBoard {
             let touching = false;
             const vixes = this.positionsToIndexes(tile.getAdjacencies(placement.direction), placement);
             for (const ix of vixes) {
-                if (this.heightMap[ix] >= supportingLevel) {
+                if (this.heightMap[ix] >= tileLevel) {
                     touching = true;
                     break;
                 }
