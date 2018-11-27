@@ -6,8 +6,7 @@ import { Board, Direction, Point } from '../lib/board';
 import { FastBoard } from '../lib/fast-board';
 import { Tile, getTile } from '../lib/tile';
 import { displayBoard } from '../lib/display';
-import { object } from 'fast-check';
-import { Timer } from '../lib/util';
+import { randInt, timeIt } from '../lib/util';
 
 test('FastBoard trivial placement', () => {
     // GIVEN
@@ -169,23 +168,6 @@ function assertBoardsEqual(m: Boards) {
     if (m.board.score() !== m.fastBoard.score()) {
         assert.fail(`Scores are not the same: ${m.board.score()} vs ${m.fastBoard.score()}`);
     }
-}
-
-/**
- * Return a random number between [a..b)
- */
-function randInt(a: number, b: number) {
-    return Math.floor(a + Math.random() * (b - a));
-}
-
-function timeIt(n: number, fn: () => void) {
-    const timer = new Timer();
-    timer.start();
-    for (let i = 0; i < n; i++) {
-        fn();
-    }
-    timer.end();
-    return timer.totalMillis;
 }
 
 function forSomeMoves(n: number, board: Board, fn: (t: Tile, m: Point) => void) {

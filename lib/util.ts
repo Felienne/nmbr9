@@ -52,3 +52,13 @@ export function range(n: number): number[] {
 
     return ret;
 }
+
+export function timeIt(n: number, fn: () => void) {
+    const timer = new Timer();
+    timer.start();
+    for (let i = 0; i < n; i++) {
+        fn();
+    }
+    timer.end();
+    return timer.totalMillis;
+}
