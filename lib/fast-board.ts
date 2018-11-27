@@ -140,6 +140,10 @@ export class FastBoard {
         return this._score;
     }
 
+    public copy() {
+        return new FastBoard(this.heightMapData.slice(0), this.tileMapData.slice(0));
+    }
+
     public heightAt(x: number, y: number): number {
         return this.heightMap[y * WIDTH + x];
     }

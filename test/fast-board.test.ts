@@ -2,7 +2,7 @@
 // same behavior.
 import assert = require('assert');
 import fc = require('fast-check');
-import { Board, Direction } from '../lib/board';
+import { Board, Direction, Point } from '../lib/board';
 import { FastBoard } from '../lib/fast-board';
 import { Tile, getTile } from '../lib/tile';
 import { displayBoard } from '../lib/display';
@@ -30,18 +30,24 @@ test('FastBoard and Board behave the same', () => {
     ));
 });
 
+test('Check speed of copying', () => {
+    const fastBoard = new FastBoard();
+
+    const N = 1000;
+    const boardTime = timeIt(N, () => fastBoard.copy());
+
+    console.log('FastBoard copy():', boardTime, 'ms /', N);
+});
+
 test('FastBoard is actually faster -- canPlace() edition', () => {
     // GIVEN
     const board = new Board();
     const fastBoard = new FastBoard();
 
-    for (let i = 0; i < 10; i++) {
-        const tile = getTile(randInt(0, 10));
-        const moves = board.getOptions().filter(p => board.canPlace(tile, { ...p, direction: Direction.Up }));
-        const move = moves[randInt(0, moves.length)];
+    forSomeMoves(10, board, (tile, move) => {
         board.place(tile, { ...move, direction: Direction.Up });
         fastBoard.place(tile, { ...move, direction: Direction.Up });
-    }
+    });
 
     // WHEN
     const options = board.getOptions();
@@ -50,10 +56,9 @@ test('FastBoard is actually faster -- canPlace() edition', () => {
 
     const boardTime = timeIt(N, () => options.filter(p => board.canPlace(tile, { ...p, direction: Direction.Up })));
     const fastBoardTime = timeIt(N, () => options.filter(p => fastBoard.canPlace(tile, { ...p, direction: Direction.Up })));
-    const trivialTime = timeIt(N, () => options.filter(p => true));
 
-    console.log('Board', boardTime, 'ms');
-    console.log('FastBoard', fastBoardTime, 'ms');
+    console.log('Board canPlace(): ', boardTime, 'ms /', N);
+    console.log('FastBoard canPlace():', fastBoardTime, 'ms /', N);
 
     expect(fastBoardTime).toBeLessThanOrEqual(boardTime);
 });
@@ -181,4 +186,13 @@ function timeIt(n: number, fn: () => void) {
     }
     timer.end();
     return timer.totalMillis;
+}
+
+function forSomeMoves(n: number, board: Board, fn: (t: Tile, m: Point) => void) {
+    for (let i = 0; i < n; i++) {
+        const tile = getTile(randInt(0, 10));
+        const moves = board.getOptions().filter(p => board.canPlace(tile, { ...p, direction: Direction.Up }));
+        const move = moves[randInt(0, moves.length)];
+        fn(tile, move);
+    }
 }
