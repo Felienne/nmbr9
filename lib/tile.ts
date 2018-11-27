@@ -2,6 +2,9 @@ import { Direction } from "./board";
 
 const v = -1;
 
+export const TILE_WIDTH = 5;
+export const TILE_HEIGHT = 6;
+
 export class Tile {
     public value: number;
     public form: number[][];

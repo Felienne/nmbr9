@@ -13,11 +13,9 @@ export class RandomPlayer implements IPlayer {
     public move(board: Board, tile: Tile): Placement {
 
         const options = board.getOptions();
-        console.log("Options are", options)
         let locs = options.filter(p => board.canPlace(tile, {x:p.x, y:p.y, direction: Direction.Up}));
-        console.log("Possible options", locs)
         const loc = getRandom(locs);
-        console.log("Player chooses", loc)
+        console.log("I think I'm going to play", loc)
         return { x: loc.x, y: loc.y, direction: Direction.Up };
     }
 }

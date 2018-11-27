@@ -1,4 +1,4 @@
-import { Tile } from "./tile";
+import { Tile, TILE_HEIGHT, TILE_WIDTH } from "./tile";
 
 export enum Direction {
     Up = 1, //dit is 'rechtop'
@@ -24,6 +24,12 @@ export class Board {
 
     private readonly tileTurns : Tile[][] = [];
 
+    // This influences where the first tile MUST be placed
+    private readonly boundingBox: Box = {
+        topLeft: { x: 40, y: 40 },
+        botRight: { x: 40, y: 40 },
+    };
+
     constructor() {
         for (let i = 0; i < 80; i++) {
             this.heightmap[i] = [];
@@ -38,14 +44,14 @@ export class Board {
     /**
      * Return all possible positions on this map where a tile can be placed
      */
-    public getOptions() {
-        const options = [];
-        for (let y = 0; y < 74; y++) {
-            for (let x = 0; x < 75; x++) {
-                options.push({x,y});
+    public getOptions(): Point[] {
+        const ret: Point[] = [];
+        for (let y = this.boundingBox.topLeft.y - TILE_HEIGHT - 1; y < this.boundingBox.botRight.y + 1; y++) {
+            for (let x = this.boundingBox.topLeft.x - TILE_WIDTH - 1; x < this.boundingBox.botRight.x + 1; x++) {
+                ret.push({ x, y });
             }
         }
-        return options;
+        return ret;
     }
 
     /**
@@ -56,10 +62,13 @@ export class Board {
             throw new Error(`Can't place a ${tile.value} at (${place.x}, ${place.y})`);
         }
 
-        const ones = tile.getOnes(place.direction);
+        // Make a point relative to placement absolute on the board
+        const makeAbsolute = (p: Point) => ({ x: p.x + place.x, y: p.y + place.y });
+
+        const ones = tile.getOnes(place.direction).map(makeAbsolute);
         ones.forEach(p => {
-            this.heightmap[place.y+p.y][place.x+p.x] += 1;
-            this.tileTurns[place.y+p.y][place.x+p.x] = tile;
+            this.heightmap[p.y][p.x] += 1;
+            this.tileTurns[p.y][p.x] = tile;
         });
 
         // als we kunnen plaatsen, dan gaan we meteen de score updaten
@@ -67,8 +76,16 @@ export class Board {
         // om te weten heo hoog iets ligt, kijken we naar de hoogte van 1 van de eentjes
         // we weten dankzij de call naar canPlace toch zeker dat dat allemaal dezelfde hoogte is
         const p = ones[0];
-        const placementHeight = this.heightmap[place.y + p.y][place.x + p.x] - 1;
+        const placementHeight = this.heightmap[p.y][p.x] - 1;
         this._score += placementHeight * tile.value;
+
+        // Stretch the bounding box
+        for (const p of ones) {
+            if (p.x < this.boundingBox.topLeft.x) this.boundingBox.topLeft.x = p.x;
+            if (p.x > this.boundingBox.botRight.x) this.boundingBox.botRight.x = p.x;
+            if (p.y < this.boundingBox.topLeft.y) this.boundingBox.topLeft.y = p.y;
+            if (p.y > this.boundingBox.botRight.y) this.boundingBox.botRight.y = p.y;
+        }
     }
 
     /**
@@ -167,4 +184,9 @@ export interface Placement {
 export interface Point {
     x: number;
     y: number;
+}
+
+export interface Box {
+    topLeft: Point;
+    botRight: Point;
 }
