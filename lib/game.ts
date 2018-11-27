@@ -34,8 +34,7 @@ export class Game {
 
             const tile = getTile(value);
             tile.turn = turn;
-            console.log("Turn", turn);
-            console.log("Placing tile of value", value);
+            console.log("Turn:", turn, " | Tile:", value);
 
             // Give all non-disqualified players a chance to move
             for (const player of this.players) {
@@ -76,6 +75,7 @@ export class Game {
         for (const player of this.players) {
             console.log(`PLAYER: ${player.player.name}`);
             console.log('STATUS: ' + (player.disqualified ? `*disqualified* (${player.disqualificationReason})` : 'finished'));
+            console.log(`SCORE:  ${player.board.score()}`);
             console.log(`SPEED:  ${player.timer.average.toPrecision(3)}ms/turn`);
             // FIXME: Score
             console.log('BOARD:');
