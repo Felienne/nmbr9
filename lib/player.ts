@@ -13,5 +13,5 @@ export interface IPlayer {
     /**
      * Called when the player needs to make a move
      */
-    move(board: Board, tile: Tile): Placement;
+    move(board: Board, tile: Tile): Placement | undefined;
 }

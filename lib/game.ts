@@ -52,7 +52,13 @@ export class Game {
                     //
                     // Should not be allowed :).
                     const placement = player.player.move(player.board, tile);
-                    player.board.place(tile, placement);
+
+                    if (placement !== undefined) {
+                        player.board.place(tile, placement);
+                    } else {
+                        player.disqualified = true;
+                        player.disqualificationReason = 'Player gave up';
+                    }
                 } catch(e) {
                     player.disqualified = true;
                     player.disqualificationReason = e.message;
