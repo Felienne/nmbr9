@@ -77,7 +77,6 @@ export class Game {
             console.log('STATUS: ' + (player.disqualified ? `*disqualified* (${player.disqualificationReason})` : 'finished'));
             console.log(`SCORE:  ${player.board.score()}`);
             console.log(`SPEED:  ${player.timer.average.toPrecision(3)}ms/turn`);
-            // FIXME: Score
             console.log('BOARD:');
             console.log(displayBoard(player.board));
             console.log('');
