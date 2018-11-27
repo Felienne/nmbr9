@@ -4,13 +4,20 @@ export interface tuple {
 }
 
 export class Deck {
-    private allcards:number[] = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9];
+    private allcards:number[];
     private index:number;
 
-    public constructor()
+    public constructor(d?:Deck)
     {
-        this.index = 0;
-        this.shuffle()
+        if (d === undefined){
+            this.index = 0;
+            this.allcards = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9];
+            this.shuffle()
+        }
+        else{
+            this.index = d.index;
+            this.allcards = d.allcards.slice();
+        }
     }
 
     private shuffle():void
@@ -24,8 +31,20 @@ export class Deck {
     public draw():tuple|false
     {
         this.index++;
-        const end = this.allcards.length;
-        if (this.index>=end) return false;
-        return {turn: this.index, value: this.allcards[this.index]}
+        if (this.allcards.length === 0){
+            return false
+        }
+        else{
+            const returnValue = this.allcards.pop();
+            return {turn: this.index, value: returnValue}
+        }
+    }
+
+    public remainingCards(){
+        return this.allcards;
+    }
+
+    public copy():Deck{
+        return new Deck(this); //constructor with argument creates copy
     }
 }

@@ -50,7 +50,9 @@ export class Game {
                     // Or they can cheat by changing tile.value.
                     //
                     // Should not be allowed :).
-                    const placement = player.player.move(player.board, tile);
+                    
+                    const copiedDeck = new Deck(this.deck);
+                    const placement = player.player.move(player.board, copiedDeck, tile);
 
                     if (placement !== undefined) {
                         player.board.place(tile, placement);
