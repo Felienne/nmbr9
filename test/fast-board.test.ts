@@ -160,6 +160,10 @@ function assertBoardsEqual(m: Boards) {
         console.log('FASTBOARD\n', fastBoard);
         assert.fail('Boards are not the same');
     }
+
+    if (m.board.score() !== m.fastBoard.score()) {
+        assert.fail(`Scores are not the same: ${m.board.score()} vs ${m.fastBoard.score()}`);
+    }
 }
 
 /**

@@ -22,11 +22,27 @@ const HEIGHT = 80;
  * the highest number we need to store is 209 which fits in 8 bits.
  */
 export class FastBoard {
+    /**
+     * Memory for the height map
+     */
     private readonly heightMapData: ArrayBuffer;
-    private readonly tileMapData: ArrayBuffer;
     private readonly heightMap: Uint8Array;
+
+    /**
+     * Memory for the tile data
+     */
+    private readonly tileMapData: ArrayBuffer;
     private readonly tileMap: Uint8Array;
+
+    /**
+     * Running maximum of height on the board
+     */
     private _maxHeight: number;
+
+    /**
+     * Running tally of score
+     */
+    private _score : number = 0;
 
     constructor(heightMapData?: ArrayBuffer, turnsData?: ArrayBuffer) {
         this.heightMapData = heightMapData || new ArrayBuffer(WIDTH * HEIGHT);
@@ -56,6 +72,9 @@ export class FastBoard {
             // Encode both turn and value in the same byte
             this.tileMap[i] = tile.turn * 10 + tile.value;
         }
+
+        const level = this.heightMap[ixes[0]];
+        this._score += (level - 1) * tile.value;
     }
 
     public canPlace(tile: Tile, placement: Placement): boolean {
@@ -115,6 +134,10 @@ export class FastBoard {
 
     public maxHeight() {
         return this._maxHeight;
+    }
+
+    public score() {
+        return this._score;
     }
 
     public heightAt(x: number, y: number): number {
