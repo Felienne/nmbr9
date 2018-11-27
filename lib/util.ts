@@ -9,6 +9,13 @@ export function getRandom<T>(list:T[]){
     }
 }
 
+/**
+ * Return a random number between [a..b)
+ */
+export function randInt(a: number, b: number) {
+    return Math.floor(a + Math.random() * (b - a));
+}
+
 export class Timer {
     public totalMillis = 0;
     public increments = 0;

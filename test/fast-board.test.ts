@@ -7,6 +7,7 @@ import { FastBoard } from '../lib/fast-board';
 import { Tile, getTile } from '../lib/tile';
 import { displayBoard } from '../lib/display';
 import { object } from 'fast-check';
+import { Timer } from '../lib/util';
 
 test('FastBoard trivial placement', () => {
     // GIVEN
@@ -27,6 +28,34 @@ test('FastBoard and Board behave the same', () => {
             fc.modelRun(s, cmds);
         }
     ));
+});
+
+test('FastBoard is actually faster -- canPlace() edition', () => {
+    // GIVEN
+    const board = new Board();
+    const fastBoard = new FastBoard();
+
+    for (let i = 0; i < 10; i++) {
+        const tile = getTile(randInt(0, 10));
+        const moves = board.getOptions().filter(p => board.canPlace(tile, { ...p, direction: Direction.Up }));
+        const move = moves[randInt(0, moves.length)];
+        board.place(tile, { ...move, direction: Direction.Up });
+        fastBoard.place(tile, { ...move, direction: Direction.Up });
+    }
+
+    // WHEN
+    const options = board.getOptions();
+    const N = 100;
+    const tile = getTile(5);
+
+    const boardTime = timeIt(N, () => options.filter(p => board.canPlace(tile, { ...p, direction: Direction.Up })));
+    const fastBoardTime = timeIt(N, () => options.filter(p => fastBoard.canPlace(tile, { ...p, direction: Direction.Up })));
+    const trivialTime = timeIt(N, () => options.filter(p => true));
+
+    console.log('Board', boardTime, 'ms');
+    console.log('FastBoard', fastBoardTime, 'ms');
+
+    expect(fastBoardTime).toBeLessThanOrEqual(boardTime);
 });
 
 interface Boards {
@@ -131,4 +160,21 @@ function assertBoardsEqual(m: Boards) {
         console.log('FASTBOARD\n', fastBoard);
         assert.fail('Boards are not the same');
     }
+}
+
+/**
+ * Return a random number between [a..b)
+ */
+function randInt(a: number, b: number) {
+    return Math.floor(a + Math.random() * (b - a));
+}
+
+function timeIt(n: number, fn: () => void) {
+    const timer = new Timer();
+    timer.start();
+    for (let i = 0; i < n; i++) {
+        fn();
+    }
+    timer.end();
+    return timer.totalMillis;
 }
