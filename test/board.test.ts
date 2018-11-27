@@ -1,6 +1,7 @@
 import 'jest';
 import { Board, Direction } from '../lib/board';
 import { getTile } from '../lib/tile';
+import { displayBoard } from '../lib/display';
 
 test('maxHeight is 1 after placing a stone', () => {
     // GIVEN
@@ -106,7 +107,7 @@ test('place 8, score is 0', () => {
 
     // WHEN
     const t8 = getTile(8);
-    board.place(t8, { x: 0, y: 0, direction: Direction.Up });    
+    board.place(t8, { x: 0, y: 0, direction: Direction.Up });
 
     // THEN
     expect(board.score()).toBe(0);
@@ -148,7 +149,3 @@ test('place 9, should be able to place another 9 next to it', () => {
     // THEN
     expect(allowed).toBe(true);
 });
-
-
-
-;

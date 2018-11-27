@@ -42,7 +42,7 @@ export class Board {
         const options = [];
         for (let y = 0; y < 74; y++) {
             for (let x = 0; x < 75; x++) {
-                    options.push({x,y});
+                options.push({x,y});
             }
         }
         return options;
@@ -75,36 +75,32 @@ export class Board {
      * Return whether the given tile can be placed here
      */
     public canPlace(tile: Tile, placement: Placement) {
-        const self = this;
-        
         // Make a point relative to placement absolute on the board
-        const onBoard = (p: Point) => ({ x: p.x + placement.x, y: p.y + placement.y });
+        const makeAbsolute = (p: Point) => ({ x: p.x + placement.x, y: p.y + placement.y });
         // Return the heightmap at a certain (absolute) point
-        const heightMapValue = (p: Point) => self.heightmap[p.y][p.x];
+        const getHeight = (p: Point) => this.heightmap[p.y][p.x];
         // Return the tileTurns at a certain (absolute) point
-        const tileTurnsValue = (p: Point) => self.tileTurns[p.y][p.x];
+        const getTile = (p: Point) => this.tileTurns[p.y] && this.tileTurns[p.y][p.x];
+        // Predicate to check if a point lies fully within the board
+        const onBoard = (p: Point) => 0 <= p.x && p.x < 80 && 0 <= p.y && p.y < 80;
 
-        const boardLocations = tile.getOnes(placement.direction).map(onBoard);
+        const onesLocations = tile.getOnes(placement.direction).map(makeAbsolute);
+        const boardLocations = onesLocations.filter(onBoard);
 
         // Return false if there are any boardLocations outside the actual board
-        const xs = boardLocations.map(p => p.x);
-        const ys = boardLocations.map(p => p.y);
-        if (Math.min(...xs) < 0 || Math.max(...xs) >= 80) { return false; }
-        if (Math.min(...ys) < 0 || Math.max(...ys) >= 80) { return false; }
+        if (boardLocations.length !== onesLocations.length) { return false; }
 
-        const below: number[] = boardLocations.map(heightMapValue) //een lijst van alle element die 'onder' deze form ligt
+        const below: number[] = boardLocations.map(getHeight) //een lijst van alle element die 'onder' deze form ligt
 
         //lig ik 'recht' aka zijn alle getallen onder de form in de heightmap hetzelfde getal?
 
-        const formBelow: number[] = below.filter(x => x !== -1) //eerst alle non-v's eruit filteren
-
-        const supportingLevel = formBelow[0]
-        const balanced: boolean = formBelow.length === 0 || formBelow.every(x => x === supportingLevel) //dan kijken of alle elementen hetzelfde zin als het eerste
+        const supportingLevel = below[0]
+        const balanced: boolean = below.length === 0 || below.every(x => x === supportingLevel) //dan kijken of alle elementen hetzelfde zin als het eerste
 
         // als we op een hogere verdieping liggen (niet 0), dan moeten er minstens 2 instanties (turn-numbers) onder liggen
 
         //we kijken in tileTurns wat er onder deze tegel komt te liggen
-        const tileTurnsBelow: number[] = boardLocations.map(tileTurnsValue).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
+        const tileTurnsBelow: number[] = boardLocations.map(getTile).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
 
         //we gebruiken een truukje vergelijkbaar met wat we bij balanced doen
         //we pakken element 0, en er moet er minstens eentje anders zijn dan elem 1
@@ -114,17 +110,20 @@ export class Board {
 
         //if we are placing the first tile of a new level (aka the lower level is currently the highst)
         //touching is not a requirement (it is touching from below haha!)
-        if (supportingLevel === this.maxHeight()){
+        if (supportingLevel === this.maxHeight()) {
             return balanced && onTwoTiles;
         }
-        else{            
+        else {
             //is minstens een van de vakjes die in de form een v is, in de heightmap gelijk aan het gewenste level (supporting level + 1)
-            const touchesV:boolean = tile.getAdjacencies(placement.direction).map(onBoard).map(heightMapValue).some(x => x === supportingLevel + 1);
+            const touchesV:boolean = tile.getAdjacencies(placement.direction)
+                    .map(makeAbsolute)
+                    .filter(onBoard)
+                    .map(getHeight)
+                    .some(x => x >= supportingLevel + 1);
 
             return touchesV && balanced && onTwoTiles;
         }
     }
-
 
     public score(){
         return this._score;
