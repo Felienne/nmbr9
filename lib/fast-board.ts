@@ -25,13 +25,11 @@ export class FastBoard {
     /**
      * Memory for the height map
      */
-    private readonly heightMapData: ArrayBuffer;
     private readonly heightMap: Uint8Array;
 
     /**
      * Memory for the tile data
      */
-    private readonly tileMapData: ArrayBuffer;
     private readonly tileMap: Uint8Array;
 
     /**
@@ -42,14 +40,13 @@ export class FastBoard {
     /**
      * Running tally of score
      */
-    private _score : number = 0;
+    private _score : number;
 
-    constructor(heightMapData?: ArrayBuffer, turnsData?: ArrayBuffer) {
-        this.heightMapData = heightMapData || new ArrayBuffer(WIDTH * HEIGHT);
-        this.tileMapData = turnsData || new ArrayBuffer(WIDTH * HEIGHT);
-        this.heightMap = new Uint8Array(this.heightMapData);
-        this.tileMap = new Uint8Array(this.tileMapData);
-        this._maxHeight = Math.max(...this.heightMap);
+    constructor(source?: FastBoard) {
+        this.heightMap = (source && source.heightMap.slice(0)) || new Uint8Array(WIDTH * HEIGHT);
+        this.tileMap = (source && source.tileMap.slice(0)) || new Uint8Array(WIDTH * HEIGHT);
+        this._maxHeight = source ? source._maxHeight : 0;
+        this._score = source ? source._score : 0;
     }
 
     public place(tile: Tile, place: Placement) {
@@ -138,6 +135,10 @@ export class FastBoard {
 
     public score() {
         return this._score;
+    }
+
+    public copy() {
+        return new FastBoard(this);
     }
 
     public heightAt(x: number, y: number): number {

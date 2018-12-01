@@ -2,12 +2,11 @@
 // same behavior.
 import assert = require('assert');
 import fc = require('fast-check');
-import { Board, Direction } from '../lib/board';
+import { Board, Direction, Point, Placement } from '../lib/board';
 import { FastBoard } from '../lib/fast-board';
 import { Tile, getTile } from '../lib/tile';
 import { displayBoard } from '../lib/display';
-import { object } from 'fast-check';
-import { Timer } from '../lib/util';
+import { randInt, timeIt } from '../lib/util';
 
 test('FastBoard trivial placement', () => {
     // GIVEN
@@ -30,18 +29,24 @@ test('FastBoard and Board behave the same', () => {
     ));
 });
 
+test('Check speed of copying', () => {
+    const fastBoard = new FastBoard();
+
+    const N = 1000;
+    const boardTime = timeIt(N, () => fastBoard.copy());
+
+    console.log('FastBoard copy():', boardTime, 'ms /', N);
+});
+
 test('FastBoard is actually faster -- canPlace() edition', () => {
     // GIVEN
     const board = new Board();
     const fastBoard = new FastBoard();
 
-    for (let i = 0; i < 10; i++) {
-        const tile = getTile(randInt(0, 10));
-        const moves = board.getAllPlacements().filter(p => board.canPlace(tile, p));
-        const move = moves[randInt(0, moves.length)];
+    forSomeMoves(10, board, (tile, move) => {
         board.place(tile, move);
         fastBoard.place(tile, move);
-    }
+    });
 
     // WHEN
     const options = board.getAllPlacements();
@@ -52,8 +57,8 @@ test('FastBoard is actually faster -- canPlace() edition', () => {
     const fastBoardTime = timeIt(N, () => options.filter(p => fastBoard.canPlace(tile, p)));
     const trivialTime = timeIt(N, () => options.filter(p => true));
 
-    console.log('Board', boardTime, 'ms');
-    console.log('FastBoard', fastBoardTime, 'ms');
+    console.log('Board canPlace(): ', boardTime, 'ms /', N);
+    console.log('FastBoard canPlace():', fastBoardTime, 'ms /', N);
 
     expect(fastBoardTime).toBeLessThanOrEqual(boardTime);
 });
@@ -166,19 +171,11 @@ function assertBoardsEqual(m: Boards) {
     }
 }
 
-/**
- * Return a random number between [a..b)
- */
-function randInt(a: number, b: number) {
-    return Math.floor(a + Math.random() * (b - a));
-}
-
-function timeIt(n: number, fn: () => void) {
-    const timer = new Timer();
-    timer.start();
+function forSomeMoves(n: number, board: Board, fn: (t: Tile, m: Placement) => void) {
     for (let i = 0; i < n; i++) {
-        fn();
+        const tile = getTile(randInt(0, 10));
+        const moves = board.getLegalPlacement(tile);
+        const move = moves[randInt(0, moves.length)];
+        fn(tile, move);
     }
-    timer.end();
-    return timer.totalMillis;
 }
