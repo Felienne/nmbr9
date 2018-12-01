@@ -42,9 +42,9 @@ export class Board {
     }
 
     /**
-     * Return all possible placements on this map where a tile can be placed
+     * Return all fields on the board (TODO: could be cached, always returns the same list)
      */
-    public getOptions(): Placement[] {
+    public getAllPlacements(): Placement[] {
         const ret: Placement[] = [];
         for (let y = this.boundingBox.topLeft.y - TILE_HEIGHT - 1; y < this.boundingBox.botRight.y + 1; y++) {
             for (let x = this.boundingBox.topLeft.x - TILE_WIDTH - 1; x < this.boundingBox.botRight.x + 1; x++) {
@@ -58,6 +58,19 @@ export class Board {
         }
         return ret;
     }
+
+    /**
+     * return all placements: (position + directions where the tile can be placed)
+     */
+
+    public getLegalPlacement(tile:Tile){
+        const options = this.getAllPlacements();
+        let locs = options.filter(p => this.canPlace(tile, p));
+        return locs;
+    }
+
+
+
 
     /**
      * Place the given tile here

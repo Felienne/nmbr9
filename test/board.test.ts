@@ -92,7 +92,7 @@ test('empty board has many possible positions', () => {
     const board = new Board();
 
     // WHEN
-    const options = board.getOptions();
+    const options = board.getAllPlacements();
 
     // THEN
     expect(options.length).toBeGreaterThan(0);

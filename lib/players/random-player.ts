@@ -13,7 +13,7 @@ export class RandomPlayer implements IPlayer {
 
     public move(board: Board, deck:Deck, tile: Tile): Placement | undefined {
 
-        const options = board.getOptions();
+        const options = board.getAllPlacements();
         let locs = options.filter(p => board.canPlace(tile, p));
         const loc = getRandom(locs);
 

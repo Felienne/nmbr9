@@ -37,14 +37,14 @@ test('FastBoard is actually faster -- canPlace() edition', () => {
 
     for (let i = 0; i < 10; i++) {
         const tile = getTile(randInt(0, 10));
-        const moves = board.getOptions().filter(p => board.canPlace(tile, p));
+        const moves = board.getAllPlacements().filter(p => board.canPlace(tile, p));
         const move = moves[randInt(0, moves.length)];
         board.place(tile, move);
         fastBoard.place(tile, move);
     }
 
     // WHEN
-    const options = board.getOptions();
+    const options = board.getAllPlacements();
     const N = 100;
     const tile = getTile(5);
 
@@ -140,7 +140,7 @@ class PlaceRelativeCommand implements BoardsCommand {
     }
 
     public run(m: Boards, r: Boards): void {
-        const moves = m.board.getOptions().filter(p => m.board.canPlace(this.tile, p));
+        const moves = m.board.getAllPlacements().filter(p => m.board.canPlace(this.tile, p));
         if (moves.length === 0) { return; }
 
         const move = moves[this.moveNumber % moves.length];
