@@ -42,13 +42,18 @@ export class Board {
     }
 
     /**
-     * Return all possible positions on this map where a tile can be placed
+     * Return all possible placements on this map where a tile can be placed
      */
-    public getOptions(): Point[] {
-        const ret: Point[] = [];
+    public getOptions(): Placement[] {
+        const ret: Placement[] = [];
         for (let y = this.boundingBox.topLeft.y - TILE_HEIGHT - 1; y < this.boundingBox.botRight.y + 1; y++) {
             for (let x = this.boundingBox.topLeft.x - TILE_WIDTH - 1; x < this.boundingBox.botRight.x + 1; x++) {
-                ret.push({ x, y });
+                ret.push(
+                    { x, y, direction: Direction.Up },
+                    { x, y, direction: Direction.Down },
+                    { x, y, direction: Direction.Left },
+                    { x, y, direction: Direction.Right }
+                    );
             }
         }
         return ret;

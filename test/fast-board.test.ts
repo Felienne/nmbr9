@@ -37,10 +37,10 @@ test('FastBoard is actually faster -- canPlace() edition', () => {
 
     for (let i = 0; i < 10; i++) {
         const tile = getTile(randInt(0, 10));
-        const moves = board.getOptions().filter(p => board.canPlace(tile, { ...p, direction: Direction.Up }));
+        const moves = board.getOptions().filter(p => board.canPlace(tile, p));
         const move = moves[randInt(0, moves.length)];
-        board.place(tile, { ...move, direction: Direction.Up });
-        fastBoard.place(tile, { ...move, direction: Direction.Up });
+        board.place(tile, move);
+        fastBoard.place(tile, move);
     }
 
     // WHEN
@@ -48,8 +48,8 @@ test('FastBoard is actually faster -- canPlace() edition', () => {
     const N = 100;
     const tile = getTile(5);
 
-    const boardTime = timeIt(N, () => options.filter(p => board.canPlace(tile, { ...p, direction: Direction.Up })));
-    const fastBoardTime = timeIt(N, () => options.filter(p => fastBoard.canPlace(tile, { ...p, direction: Direction.Up })));
+    const boardTime = timeIt(N, () => options.filter(p => board.canPlace(tile, p)));
+    const fastBoardTime = timeIt(N, () => options.filter(p => fastBoard.canPlace(tile, p)));
     const trivialTime = timeIt(N, () => options.filter(p => true));
 
     console.log('Board', boardTime, 'ms');
@@ -140,12 +140,12 @@ class PlaceRelativeCommand implements BoardsCommand {
     }
 
     public run(m: Boards, r: Boards): void {
-        const moves = m.board.getOptions().filter(p => m.board.canPlace(this.tile, { ...p, direction: Direction.Up }));
+        const moves = m.board.getOptions().filter(p => m.board.canPlace(this.tile, p));
         if (moves.length === 0) { return; }
 
         const move = moves[this.moveNumber % moves.length];
-        m.board.place(this.tile, { ...move, direction: Direction.Up });
-        m.fastBoard.place(this.tile, { ...move, direction: Direction.Up });
+        m.board.place(this.tile, move);
+        m.fastBoard.place(this.tile, move);
 
         assertBoardsEqual(m);
     }

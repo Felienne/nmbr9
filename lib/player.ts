@@ -1,5 +1,6 @@
 import { Direction, Board, Placement } from "./board";
 import { Tile } from "./tile";
+import { Deck } from "./cards";
 
 /**
  * Interface that should be implemented by Players
@@ -13,5 +14,5 @@ export interface IPlayer {
     /**
      * Called when the player needs to make a move
      */
-    move(board: Board, tile: Tile): Placement | undefined;
+    move(board: Board, deck: Deck, tile: Tile): Placement | undefined;
 }

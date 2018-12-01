@@ -14,12 +14,12 @@ export class RandomPlayer implements IPlayer {
     public move(board: Board, deck:Deck, tile: Tile): Placement | undefined {
 
         const options = board.getOptions();
-        let locs = options.filter(p => board.canPlace(tile, {x:p.x, y:p.y, direction: Direction.Up}));
+        let locs = options.filter(p => board.canPlace(tile, p));
         const loc = getRandom(locs);
 
         if (loc) {
             console.log("Hmmm... I think I'm going to play", loc)
-            return { x: loc.x, y: loc.y, direction: Direction.Up };
+            return loc;
         }
 
         console.log("Oh blimey. Apparently I didn't find any possible moves?");

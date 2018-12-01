@@ -14,12 +14,12 @@ export class RandomPlayer implements IPlayer {
     public move(board: Board, deck:Deck, tile: Tile): Placement | undefined {
 
         const options = board.getOptions();
-        let locs = options.filter(p => board.canPlace(tile, {x:p.x, y:p.y, direction: Direction.Up}));
+        let locs = options.filter(p => board.canPlace(tile, p));
         const loc = getRandom(locs);
 
         if (loc) {
             console.log("Hmmm... I think I'm going to play", loc)
-            return { x: loc.x, y: loc.y, direction: Direction.Up };
+            return loc;
         }
 
         console.log("Oh blimey. Apparently I didn't find any possible moves?");
@@ -35,19 +35,19 @@ export class RandomPlayer implements IPlayer {
 
         //nu gaan we voor deze plaatsing een aantal mogelijke trekkingen proberen
         for (const i of range(maxNumberofTries)){
+            const remainingDeckForThisRound = new Deck(deck);
+
             let scoreForTry = 0;
-            for (const j of range(deck.remainingCards().length)){
-                //trek een kaart
-                let drawnCard = deck.draw();
-                if (drawnCard !== false){ // dit staat hier alleen om de compiler tevreden te houden
-                                          // stil maar compilertje, er komt geen false hoor!
-                    const { turn, value }  = drawnCard;
-                    
-                //TODO: hier verder
-                //hier weer het maximum voor die kaart rekenen en 
-                //dan optellen allemaal
-    
-                }
+
+            let drawnCard = remainingDeckForThisRound.draw();
+            while (drawnCard !== false) {
+                const { turn, value }  = drawnCard;
+
+
+
+
+
+                drawnCard = remainingDeckForThisRound.draw();
             }
         }
         return maxScore;
