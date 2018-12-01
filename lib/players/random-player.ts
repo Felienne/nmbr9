@@ -1,4 +1,4 @@
-import { Board, Direction, Placement } from '../board';
+import { Board, Orientation, Move } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
 import { getRandom } from '../util';
@@ -11,9 +11,9 @@ import { Deck } from '../cards';
 export class RandomPlayer implements IPlayer {
     public readonly name: string = 'Randy McRandFace';
 
-    public move(board: Board, deck:Deck, tile: Tile): Placement | undefined {
+    public calculateMove(board: Board, deck:Deck, tile: Tile): Move | undefined {
 
-        const loc = getRandom(board.getLegalPlacements(tile));
+        const loc = getRandom(board.getLegalMoves(tile));
 
         if (loc) {
             console.log("Hmmm... I think I'm going to play", loc)

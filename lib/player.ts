@@ -1,4 +1,4 @@
-import { Direction, Board, Placement } from "./board";
+import { Orientation, Board, Move } from "./board";
 import { Tile } from "./tile";
 import { Deck } from "./cards";
 
@@ -14,5 +14,5 @@ export interface IPlayer {
     /**
      * Called when the player needs to make a move
      */
-    move(board: Board, deck: Deck, tile: Tile): Placement | undefined;
+    calculateMove(board: Board, deck: Deck, tile: Tile): Move | undefined;
 }

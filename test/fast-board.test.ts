@@ -2,18 +2,18 @@
 // same behavior.
 import assert = require('assert');
 import fc = require('fast-check');
-import { Board, Direction, Point, Placement } from '../lib/board';
+import { Board, Orientation, Point, Move } from '../lib/board';
 import { FastBoard } from '../lib/fast-board';
 import { Tile, getTile } from '../lib/tile';
 import { displayBoard } from '../lib/display';
 import { randInt, timeIt } from '../lib/util';
 
-test('FastBoard trivial placement', () => {
+test('FastBoard trivial move', () => {
     // GIVEN
     const fb = new FastBoard();
-    fb.place(getTile(0), { x: 0, y: 5, direction: 1});
+    fb.place(getTile(0), { x: 0, y: 5, orientation: 1});
 
-    expect(fb.canPlace(getTile(8), { x: 54, y: 29, direction: 1})).toBeFalsy();
+    expect(fb.canPlace(getTile(8), { x: 54, y: 29, orientation: 1})).toBeFalsy();
 });
 
 test('FastBoard and Board behave the same', () => {
@@ -49,7 +49,7 @@ test('FastBoard is actually faster -- canPlace() edition', () => {
     });
 
     // WHEN
-    const options = board.getAllPlacements();
+    const options = board.getAllMoves();
     const N = 100;
     const tile = getTile(5);
 
@@ -85,7 +85,7 @@ const allCommands = [
         arbitraryTile,
         arbitraryCoord,
         arbitraryCoord,
-        fc.constantFrom(Direction.Up, Direction.Down, Direction.Left, Direction.Right),
+        fc.constantFrom(Orientation.Up, Orientation.Down, Orientation.Left, Orientation.Right),
     ).map(x => new PlaceAbsoluteCommand(x[0], x[1], x[2], x[3])),
     fc.tuple(
         arbitraryTile,
@@ -103,30 +103,30 @@ class PlaceAbsoluteCommand implements BoardsCommand {
             tileNumber: number,
             private readonly x: number,
             private readonly y: number,
-            private readonly direction : Direction) {
+            private readonly orientation : Orientation) {
         this.tile = getTile(tileNumber);
     }
 
     public check(m: Readonly<Boards>): boolean {
-        return m.board.canPlace(this.tile, { x: this.x,  y: this.y, direction: this.direction })
-            || m.fastBoard.canPlace(this.tile, { x: this.x,  y: this.y, direction: this.direction });
+        return m.board.canPlace(this.tile, { x: this.x,  y: this.y, orientation: this.orientation })
+            || m.fastBoard.canPlace(this.tile, { x: this.x,  y: this.y, orientation: this.orientation });
     }
 
     public run(m: Boards, r: Boards): void {
-        const boardP = m.board.canPlace(this.tile, { x: this.x,  y: this.y, direction: this.direction });
-        const fastBoardP = m.fastBoard.canPlace(this.tile, { x: this.x,  y: this.y, direction: this.direction });
+        const boardP = m.board.canPlace(this.tile, { x: this.x,  y: this.y, orientation: this.orientation });
+        const fastBoardP = m.fastBoard.canPlace(this.tile, { x: this.x,  y: this.y, orientation: this.orientation });
         if (boardP !== fastBoardP) {
             throw new Error(`Board can place: ${boardP}, FastBoard can place: ${fastBoardP}`);
         }
 
-        m.board.place(this.tile, { x: this.x,  y: this.y, direction: this.direction });
-        m.fastBoard.place(this.tile, { x: this.x,  y: this.y, direction: this.direction });
+        m.board.place(this.tile, { x: this.x,  y: this.y, orientation: this.orientation });
+        m.fastBoard.place(this.tile, { x: this.x,  y: this.y, orientation: this.orientation });
 
         assertBoardsEqual(m);
     }
 
     public toString(): string {
-        return `Place(${this.tile.value}, { x: ${this.x}, y: ${this.y}, direction: ${this.direction}})`;
+        return `Place(${this.tile.value}, { x: ${this.x}, y: ${this.y}, direction: ${this.orientation}})`;
     }
 }
 
@@ -145,7 +145,7 @@ class PlaceRelativeCommand implements BoardsCommand {
     }
 
     public run(m: Boards, r: Boards): void {
-        const moves = m.board.getAllPlacements().filter(p => m.board.canPlace(this.tile, p));
+        const moves = m.board.getAllMoves().filter(p => m.board.canPlace(this.tile, p));
         if (moves.length === 0) { return; }
 
         const move = moves[this.moveNumber % moves.length];
@@ -171,10 +171,10 @@ function assertBoardsEqual(m: Boards) {
     }
 }
 
-function forSomeMoves(n: number, board: Board, fn: (t: Tile, m: Placement) => void) {
+function forSomeMoves(n: number, board: Board, fn: (t: Tile, m: Move) => void) {
     for (let i = 0; i < n; i++) {
         const tile = getTile(randInt(0, 10));
-        const moves = board.getLegalPlacements(tile);
+        const moves = board.getLegalMoves(tile);
         const move = moves[randInt(0, moves.length)];
         fn(tile, move);
     }

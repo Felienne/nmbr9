@@ -1,4 +1,4 @@
-import { Direction } from "./board";
+import { Orientation } from "./board";
 
 const v = -1;
 
@@ -12,32 +12,32 @@ export class Tile {
                              // of the same number, since it is not allowed to place a tile on one instance.
                              // since there is only one tile per turn, this serves as identity
 
-    public getOnes(d:Direction){
+    public getOnes(d:Orientation){
         return this.getNumberLocations(1, d);
     }
 
-    public getAdjacencies(d:Direction) {
+    public getAdjacencies(d:Orientation) {
         return this.getNumberLocations(v, d);
     }
 
 
-    private getNumberLocations(num: number, d:Direction){
+    private getNumberLocations(num: number, d:Orientation){
         const ret = [];
         for (let y = 0; y < 6; y++){
             for (let x = 0; x < 5; x++){
                 if (this.form[y][x] === num){
                     switch (d) {
-                        case Direction.Up:
+                        case Orientation.Up:
                             ret.push({y:y,x:x});
                             break;
-                        case Direction.Right:
+                        case Orientation.Right:
                             ret.push({y:x,x:4-y});
                             break;
-                        case Direction.Down:
+                        case Orientation.Down:
                             ret.push({x:5-x,y:4-y});
                         break;
                             break;
-                        case Direction.Left:
+                        case Orientation.Left:
                             ret.push({y:5-x,x:y});
                             break;
                     }

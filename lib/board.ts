@@ -1,6 +1,6 @@
 import { Tile, TILE_HEIGHT, TILE_WIDTH } from "./tile";
 
-export enum Direction {
+export enum Orientation {
     Up = 1, //dit is 'rechtop'
     Right, //met de bovenkant richtend naar rechts etc.
     Down,
@@ -53,15 +53,15 @@ export class Board {
     /**
      * Return all fields on the board where a tile could potentially be placed
      */
-    public getAllPlacements(): Placement[] {
-        const ret: Placement[] = [];
+    public getAllMoves(): Move[] {
+        const ret: Move[] = [];
         for (let y = this.boundingBox.topLeft.y - TILE_HEIGHT - 1; y < this.boundingBox.botRight.y + 1; y++) {
             for (let x = this.boundingBox.topLeft.x - TILE_WIDTH - 1; x < this.boundingBox.botRight.x + 1; x++) {
                 ret.push(
-                    { x, y, direction: Direction.Up },
-                    { x, y, direction: Direction.Down },
-                    { x, y, direction: Direction.Left },
-                    { x, y, direction: Direction.Right }
+                    { x, y, orientation: Orientation.Up },
+                    { x, y, orientation: Orientation.Down },
+                    { x, y, orientation: Orientation.Left },
+                    { x, y, orientation: Orientation.Right }
                     );
             }
         }
@@ -69,10 +69,10 @@ export class Board {
     }
 
     /**
-     * return all placements: (position + directions where the tile can be placed)
+     * return all moves: (position + orientations where the tile can be placed)
      */
-    public getLegalPlacements(tile:Tile){
-        const options = this.getAllPlacements();
+    public getLegalMoves(tile:Tile){
+        const options = this.getAllMoves();
         let locs = options.filter(p => this.canPlace(tile, p));
         return locs;
     }
@@ -80,15 +80,15 @@ export class Board {
     /**
      * Place the given tile here
      */
-    public place(tile: Tile, place: Placement) {
+    public place(tile: Tile, place: Move) {
         if (!this.canPlace(tile, place)) {
             throw new Error(`Can't place a ${tile.value} at (${place.x}, ${place.y})`);
         }
 
-        // Make a point relative to placement absolute on the board
+        // Make a point relative to move absolute on the board
         const makeAbsolute = (p: Point) => ({ x: p.x + place.x, y: p.y + place.y });
 
-        const ones = tile.getOnes(place.direction).map(makeAbsolute);
+        const ones = tile.getOnes(place.orientation).map(makeAbsolute);
         ones.forEach(p => {
             this.heightmap[p.y][p.x] += 1;
             this.tileTurns[p.y][p.x] = tile;
@@ -99,8 +99,8 @@ export class Board {
         // om te weten heo hoog iets ligt, kijken we naar de hoogte van 1 van de eentjes
         // we weten dankzij de call naar canPlace toch zeker dat dat allemaal dezelfde hoogte is
         const p = ones[0];
-        const placementHeight = this.heightmap[p.y][p.x] - 1;
-        this._score += placementHeight * tile.value;
+        const moveHeight = this.heightmap[p.y][p.x] - 1;
+        this._score += moveHeight * tile.value;
 
         // Stretch the bounding box
         for (const p of ones) {
@@ -114,9 +114,9 @@ export class Board {
     /**
      * Return whether the given tile can be placed here
      */
-    public canPlace(tile: Tile, placement: Placement) {
-        // Make a point relative to placement absolute on the board
-        const makeAbsolute = (p: Point) => ({ x: p.x + placement.x, y: p.y + placement.y });
+    public canPlace(tile: Tile, move: Move) {
+        // Make a point relative to move absolute on the board
+        const makeAbsolute = (p: Point) => ({ x: p.x + move.x, y: p.y + move.y });
         // Return the heightmap at a certain (absolute) point
         const getHeight = (p: Point) => this.heightmap[p.y][p.x];
         // Return the tileTurns at a certain (absolute) point
@@ -124,7 +124,7 @@ export class Board {
         // Predicate to check if a point lies fully within the board
         const onBoard = (p: Point) => 0 <= p.x && p.x < 80 && 0 <= p.y && p.y < 80;
 
-        const onesLocations = tile.getOnes(placement.direction).map(makeAbsolute);
+        const onesLocations = tile.getOnes(move.orientation).map(makeAbsolute);
         const boardLocations = onesLocations.filter(onBoard);
 
         // Return false if there are any boardLocations outside the actual board
@@ -155,7 +155,7 @@ export class Board {
         }
         else {
             //is minstens een van de vakjes die in de form een v is, in de heightmap gelijk aan het gewenste level (supporting level + 1)
-            const touchesV:boolean = tile.getAdjacencies(placement.direction)
+            const touchesV:boolean = tile.getAdjacencies(move.orientation)
                     .map(makeAbsolute)
                     .filter(onBoard)
                     .map(getHeight)
@@ -196,12 +196,12 @@ export class Board {
 }
 
 /**
- * A placement of a tile
+ * A move is a location plus an orientation for the placement of a tile
  */
-export interface Placement {
+export interface Move {
     x: number;
     y: number;
-    direction: Direction;
+    orientation: Orientation;
 }
 
 export interface Point {

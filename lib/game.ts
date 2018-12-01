@@ -47,9 +47,9 @@ export class Game {
                     const copiedDeck = new Deck(this.deck);
                     const copiedBoard = new Board(player.board);
 
-                    const placement = player.player.move(copiedBoard, copiedDeck, tile); 
-                    if (placement !== undefined) {
-                        player.board.place(tile, placement);
+                    const move = player.player.calculateMove(copiedBoard, copiedDeck, tile); 
+                    if (move !== undefined) {
+                        player.board.place(tile, move);
                     } else {
                         player.disqualified = true;
                         player.disqualificationReason = 'Player gave up';

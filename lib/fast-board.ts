@@ -1,5 +1,5 @@
 import { Tile } from "./tile";
-import { Placement, Point } from "./board";
+import { Move, Point } from "./board";
 
 const WIDTH = 80;
 const HEIGHT = 80;
@@ -49,7 +49,7 @@ export class FastBoard {
         this._score = source ? source._score : 0;
     }
 
-    public place(tile: Tile, place: Placement) {
+    public place(tile: Tile, place: Move) {
         if (!this.canPlace(tile, place)) {
             throw new Error(`Can't place a ${tile.value} at (${place.x}, ${place.y})`);
         }
@@ -58,7 +58,7 @@ export class FastBoard {
         // if tile.turn ends up unset.
         if (isNaN(tile.turn)) tile.turn = 1;
 
-        const ixes = this.positionsToIndexes(tile.getOnes(place.direction), place);
+        const ixes = this.positionsToIndexes(tile.getOnes(place.orientation), place);
         for (const i of ixes) {
             const newLevel = this.heightMap[i] + 1;
             if (newLevel > this._maxHeight) {
@@ -74,15 +74,15 @@ export class FastBoard {
         this._score += (level - 1) * tile.value;
     }
 
-    public canPlace(tile: Tile, placement: Placement): boolean {
+    public canPlace(tile: Tile, move: Move): boolean {
         // NOTE: In order to be as speedy as possible, I've used
         // for loops instead of of .map(), .every(), .some().
         // IIRC V8 has trouble JITting those structures. I might
         // be wrong, testing is required.
 
         // Translate coordinates to array indexes and only work with the indexes.
-        const ones = tile.getOnes(placement.direction);
-        const ixes = this.positionsToIndexes(ones, placement);
+        const ones = tile.getOnes(move.orientation);
+        const ixes = this.positionsToIndexes(ones, move);
 
         // If any of these are outside the board, they were dropped by positionsToIndexes.
         // If that happens we can't place here.
@@ -116,7 +116,7 @@ export class FastBoard {
 
         if (supportingLevel !== this._maxHeight) {
             let touching = false;
-            const vixes = this.positionsToIndexes(tile.getAdjacencies(placement.direction), placement);
+            const vixes = this.positionsToIndexes(tile.getAdjacencies(move.orientation), move);
             for (const ix of vixes) {
                 if (this.heightMap[ix] >= tileLevel) {
                     touching = true;

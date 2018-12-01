@@ -1,4 +1,4 @@
-import { Board, Direction, Placement, Point } from '../board';
+import { Board, Orientation, Move, Point } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
 import { getRandom, range } from '../util';
@@ -11,30 +11,30 @@ import { Deck } from '../cards';
 export class MonteCarloPlayer implements IPlayer {
     public readonly name: string = 'Carlo McMonte';
 
-    public move(board: Board, deck:Deck, tile: Tile): Placement | undefined {
+    public calculateMove(board: Board, deck:Deck, tile: Tile): Move | undefined {
 
-        const moves = board.getLegalPlacements(tile); //TODO: placements should be named moves! (everywhere)
-        let max = 0;
-        let maxPlacement = undefined;
+        const moves = board.getLegalMoves(tile); 
+        let maxMoveScore = 0;
+        let maxMove = undefined;
         for (const m of moves){
             const MoveMax = this.maxScore(new Board(board),deck, tile, m);
-            if (MoveMax > max){
-                max = MoveMax;
-                maxPlacement = m;
+            if (MoveMax > maxMoveScore){
+                maxMoveScore = MoveMax;
+                maxMove = m;
             }
         }
 
 
-        if (maxPlacement) {
-            console.log("Hmmm... I think I'm going to play", maxPlacement)
-            return maxPlacement;
+        if (maxMove) {
+            console.log("Hmmm... I think I'm going to play", maxMove)
+            return maxMove;
         }
 
         console.log("Oh blimey. Apparently I didn't find any possible moves?");
         return undefined;
     }
 
-    private maxScore(board: Board, deck:Deck, t:Tile, p:Placement): number{
+    private maxScore(board: Board, deck:Deck, t:Tile, p:Move): number{
         const maxNumberofTries = 10;
         //plaats deze tile op het bord in deze orientatie
         board.place(t,p)
@@ -48,7 +48,7 @@ export class MonteCarloPlayer implements IPlayer {
 
             let drawnTile = tryDeck.drawTile();
             while (drawnTile !== undefined) {
-                const move = getRandom(tryBoard.getLegalPlacements(drawnTile));
+                const move = getRandom(tryBoard.getLegalMoves(drawnTile));
                 tryBoard.place(drawnTile, move);
 
                 drawnTile = tryDeck.drawTile();
