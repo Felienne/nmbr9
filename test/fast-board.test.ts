@@ -174,7 +174,7 @@ function assertBoardsEqual(m: Boards) {
 function forSomeMoves(n: number, board: Board, fn: (t: Tile, m: Placement) => void) {
     for (let i = 0; i < n; i++) {
         const tile = getTile(randInt(0, 10));
-        const moves = board.getLegalPlacement(tile);
+        const moves = board.getLegalPlacements(tile);
         const move = moves[randInt(0, moves.length)];
         fn(tile, move);
     }

@@ -1,3 +1,5 @@
+import { Tile, getTile } from "./tile";
+
 export interface tuple {
     turn: number;
     value: number;
@@ -39,6 +41,20 @@ export class Deck {
             return {turn: this.index, value: returnValue}
         }
     }
+
+    public drawTile():Tile|undefined{
+        const drawnCard = this.draw();
+        if (drawnCard === false) {
+            return undefined;
+        }
+        
+        const { turn, value }  = drawnCard;
+        const t = getTile(value);
+        t.turn = turn;
+        return t;        
+    }
+
+
 
     public remainingCards(){
         return this.allcards;

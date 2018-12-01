@@ -9,7 +9,7 @@ export enum Direction {
 
 export class Board {
 
-    private _score : number = 0;
+    private _score : number;
 
     //we gebruiken 2 losse datastructuren om het bord te representeren
     //heightmap zet op ieder veld de hoogte van die plek, hoeveel lagen liggen er al op
@@ -25,19 +25,28 @@ export class Board {
     private readonly tileTurns : Tile[][] = [];
 
     // This influences where the first tile MUST be placed
-    private readonly boundingBox: Box = {
-        topLeft: { x: 40, y: 40 },
-        botRight: { x: 40, y: 40 },
-    };
+    private readonly boundingBox: Box;
 
-    constructor() {
+    constructor(source?: Board) {
         for (let i = 0; i < 80; i++) {
             this.heightmap[i] = [];
             this.tileTurns[i] = [];
             for (let j = 0; j < 80; j++) {
-                this.heightmap[i][j] = 0;
-                this.tileTurns[i][j] = undefined;
+                this.heightmap[i][j] = source ? source.heightmap[i][j] : 0;
+                this.tileTurns[i][j] = source ? source.tileTurns[i][j] : undefined;
             }
+        }
+        this._score = source ? source._score : 0;
+        if (source) {
+            this.boundingBox = {
+                topLeft: { x: source.boundingBox.topLeft.x, y: source.boundingBox.topLeft.y },
+                botRight: { x: source.boundingBox.botRight.x, y: source.boundingBox.botRight.y },
+            };
+        } else {
+            this.boundingBox = {
+                topLeft: { x: 40, y: 40 },
+                botRight: { x: 40, y: 40 },
+            };
         }
     }
 
@@ -62,7 +71,7 @@ export class Board {
     /**
      * return all placements: (position + directions where the tile can be placed)
      */
-    public getLegalPlacement(tile:Tile){
+    public getLegalPlacements(tile:Tile){
         const options = this.getAllPlacements();
         let locs = options.filter(p => this.canPlace(tile, p));
         return locs;

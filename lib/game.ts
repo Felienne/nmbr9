@@ -43,17 +43,11 @@ export class Game {
                 player.timer.start();
 
                 try {
-                    // FIXME: Since players get a copy of their board, they can
-                    // cheat by mutating the Board instance. We'll have to fix that
-                    // at some point in the future.
-                    //
-                    // Or they can cheat by changing tile.value.
-                    //
-                    // Should not be allowed :).
-                    
+                    //speler krijgt een kopie van het bord en het deck, anders kan hij het stiekem aanpassen!
                     const copiedDeck = new Deck(this.deck);
-                    const placement = player.player.move(player.board, copiedDeck, tile);
+                    const copiedBoard = new Board(player.board);
 
+                    const placement = player.player.move(copiedBoard, copiedDeck, tile); 
                     if (placement !== undefined) {
                         player.board.place(tile, placement);
                     } else {
