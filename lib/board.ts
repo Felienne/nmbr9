@@ -42,7 +42,7 @@ export class Board {
     }
 
     /**
-     * Return all fields on the board (TODO: could be cached, always returns the same list)
+     * Return all fields on the board where a tile could potentially be placed
      */
     public getAllPlacements(): Placement[] {
         const ret: Placement[] = [];
@@ -62,15 +62,11 @@ export class Board {
     /**
      * return all placements: (position + directions where the tile can be placed)
      */
-
     public getLegalPlacement(tile:Tile){
         const options = this.getAllPlacements();
         let locs = options.filter(p => this.canPlace(tile, p));
         return locs;
     }
-
-
-
 
     /**
      * Place the given tile here
