@@ -1,9 +1,15 @@
-import { Orientation } from "./board";
+import { Orientation, Point } from "./board";
 
 const v = -1;
 
 export const TILE_WIDTH = 5;
 export const TILE_HEIGHT = 6;
+
+//this cache is used for all getones calls, since they are expensive
+//this cache is an interesting js construct where arrays are used as keys haha not really they are 
+//coerced to strings 
+const getOnesCache:{[key:string]:Point[]} = {};
+
 
 export class Tile {
     public value: number;
@@ -22,29 +28,36 @@ export class Tile {
 
 
     private getNumberLocations(num: number, d:Orientation){
-        const ret = [];
-        for (let y = 0; y < 6; y++){
-            for (let x = 0; x < 5; x++){
-                if (this.form[y][x] === num){
-                    switch (d) {
-                        case Orientation.Up:
-                            ret.push({y:y,x:x});
-                            break;
-                        case Orientation.Right:
-                            ret.push({y:x,x:4-y});
-                            break;
-                        case Orientation.Down:
-                            ret.push({x:5-x,y:4-y});
-                        break;
-                            break;
-                        case Orientation.Left:
-                            ret.push({y:5-x,x:y});
-                            break;
+        const key = [this.value, num, d].toString(); 
+
+        if (!(key in getOnesCache)) {
+            const ret = [];
+            for (let y = 0; y < 6; y++){
+                for (let x = 0; x < 5; x++){
+                    if (this.form[y][x] === num){
+                        switch (d) {
+                            case Orientation.Up:
+                                ret.push({y:y,x:x});
+                                break;
+                            case Orientation.Right:
+                                ret.push({y:x,x:4-y});
+                                break;
+                            case Orientation.Down:
+                                ret.push({x:5-x,y:4-y});
+                                break;
+                            case Orientation.Left:
+                                ret.push({y:5-x,x:y});
+                                break;
+                        }
                     }
                 }
             }
+            getOnesCache[key] = ret
+            return ret;
         }
-        return ret;
+
+        return getOnesCache[key];
+
     }
 }
 
