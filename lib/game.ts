@@ -4,6 +4,7 @@ import { Board } from "./board";
 import { getTile } from "./tile";
 import { Timer } from "./util";
 import { displayBoard } from "./display";
+import { FastBoard } from "./fast-board";
 
 /**
  * A single round of the game
@@ -19,7 +20,7 @@ export class Game {
         this.players = players.map(player => ({
             player,
             disqualified: false,
-            board: new Board(),
+            board: new FastBoard(),
             timer: new Timer()
         }));
     }
@@ -45,7 +46,7 @@ export class Game {
                 try {
                     //speler krijgt een kopie van het bord en het deck, anders kan hij het stiekem aanpassen!
                     const copiedDeck = new Deck(this.deck);
-                    const copiedBoard = new Board(player.board);
+                    const copiedBoard = new FastBoard(player.board);
 
                     const move = player.player.calculateMove(copiedBoard, copiedDeck, tile); 
                     if (move !== undefined) {
@@ -83,7 +84,7 @@ export class Game {
 export interface PlayerState {
     player: IPlayer;
 
-    board: Board;
+    board: FastBoard;
 
     disqualified: boolean;
 

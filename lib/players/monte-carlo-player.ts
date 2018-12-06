@@ -4,6 +4,7 @@ import { IPlayer } from "../player";
 import { getRandom, range } from '../util';
 import { displayBoard } from '../display';
 import { Deck } from '../cards';
+import { FastBoard } from '../fast-board';
 
 /**
  * This player picks a move at random
@@ -11,13 +12,13 @@ import { Deck } from '../cards';
 export class MonteCarloPlayer implements IPlayer {
     public readonly name: string = 'Carlo McMonte';
 
-    public calculateMove(board: Board, deck:Deck, tile: Tile): Move | undefined {
+    public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
 
         const moves = board.getLegalMoves(tile); 
         let maxMoveScore = 0;
         let maxMove = undefined;
         for (const m of moves){
-            const MoveMax = this.maxScore(new Board(board),deck, tile, m);
+            const MoveMax = this.maxScore(new FastBoard(board),deck, tile, m);
             if (MoveMax > maxMoveScore){
                 maxMoveScore = MoveMax;
                 maxMove = m;
@@ -34,8 +35,8 @@ export class MonteCarloPlayer implements IPlayer {
         return undefined;
     }
 
-    private maxScore(board: Board, deck:Deck, t:Tile, p:Move): number{
-        const maxNumberofTries = 10;
+    private maxScore(board: FastBoard, deck:Deck, t:Tile, p:Move): number{
+        const maxNumberofTries = 100;
         //plaats deze tile op het bord in deze orientatie
         board.place(t,p)
 
@@ -44,7 +45,7 @@ export class MonteCarloPlayer implements IPlayer {
         //nu gaan we voor deze plaatsing een aantal mogelijke trekkingen proberen
         for (const i of range(maxNumberofTries)){
             const tryDeck = new Deck(deck);
-            const tryBoard = new Board(board);
+            const tryBoard = new FastBoard(board);
 
             let drawnTile = tryDeck.drawTile();
             while (drawnTile !== undefined) {

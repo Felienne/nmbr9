@@ -4,6 +4,7 @@ import { IPlayer } from "../player";
 import { getRandom } from '../util';
 import { displayBoard } from '../display';
 import { Deck } from '../cards';
+import { FastBoard } from '../fast-board';
 
 /**
  * This player picks a move at random
@@ -11,7 +12,7 @@ import { Deck } from '../cards';
 export class RandomPlayer implements IPlayer {
     public readonly name: string = 'Randy McRandFace';
 
-    public calculateMove(board: Board, deck:Deck, tile: Tile): Move | undefined {
+    public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
 
         const loc = getRandom(board.getLegalMoves(tile));
 

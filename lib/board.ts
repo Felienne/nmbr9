@@ -24,7 +24,7 @@ export class Board {
 
     private readonly tileTurns : Tile[][] = [];
 
-    // This influences where the first tile MUST be placed
+    // bounding box limits the locations that we have to check
     private readonly boundingBox: Box;
 
     constructor(source?: Board) {

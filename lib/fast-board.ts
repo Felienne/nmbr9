@@ -1,8 +1,11 @@
 import { Tile } from "./tile";
-import { Move, Point } from "./board";
+import { Move, Point, Box, Orientation } from "./board";
 
 const WIDTH = 80;
 const HEIGHT = 80;
+
+export const TILE_WIDTH = 5;
+export const TILE_HEIGHT = 6;
 
 /**
  * A class similar to Board (but hopefully faster) which can be copied
@@ -42,11 +45,53 @@ export class FastBoard {
      */
     private _score : number;
 
+    // bounding box limits the locations that we have to check
+    private readonly boundingBox: Box;
+
     constructor(source?: FastBoard) {
         this.heightMap = (source && source.heightMap.slice(0)) || new Uint8Array(WIDTH * HEIGHT);
         this.tileMap = (source && source.tileMap.slice(0)) || new Uint8Array(WIDTH * HEIGHT);
         this._maxHeight = source ? source._maxHeight : 0;
         this._score = source ? source._score : 0;
+
+        if (source) {
+            this.boundingBox = {
+                topLeft: { x: source.boundingBox.topLeft.x, y: source.boundingBox.topLeft.y },
+                botRight: { x: source.boundingBox.botRight.x, y: source.boundingBox.botRight.y },
+            };
+        } else {
+            this.boundingBox = {
+                topLeft: { x: 40, y: 40 },
+                botRight: { x: 40, y: 40 },
+            };
+        }
+    }
+
+    /**
+     * Return all fields on the board where a tile could potentially be placed
+     */
+    public getAllMoves(): Move[] {
+        const ret: Move[] = [];
+        for (let y = this.boundingBox.topLeft.y - TILE_HEIGHT - 1; y < this.boundingBox.botRight.y + 1; y++) {
+            for (let x = this.boundingBox.topLeft.x - TILE_WIDTH - 1; x < this.boundingBox.botRight.x + 1; x++) {
+                ret.push(
+                    { x, y, orientation: Orientation.Up },
+                    { x, y, orientation: Orientation.Down },
+                    { x, y, orientation: Orientation.Left },
+                    { x, y, orientation: Orientation.Right }
+                    );
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * return all moves: (position + orientations where the tile can be placed)
+     */
+    public getLegalMoves(tile:Tile){
+        const options = this.getAllMoves();
+        let locs = options.filter(p => this.canPlace(tile, p));
+        return locs;
     }
 
     public place(tile: Tile, place: Move) {
@@ -72,6 +117,19 @@ export class FastBoard {
 
         const level = this.heightMap[ixes[0]];
         this._score += (level - 1) * tile.value;
+
+        // Make a point relative to move absolute on the board
+        const makeAbsolute = (p: Point) => ({ x: p.x + place.x, y: p.y + place.y });
+
+        const ones = tile.getOnes(place.orientation).map(makeAbsolute);
+        // Stretch the bounding box
+        for (const p of ones) {
+            if (p.x < this.boundingBox.topLeft.x) this.boundingBox.topLeft.x = p.x;
+            if (p.x > this.boundingBox.botRight.x) this.boundingBox.botRight.x = p.x;
+            if (p.y < this.boundingBox.topLeft.y) this.boundingBox.topLeft.y = p.y;
+            if (p.y > this.boundingBox.botRight.y) this.boundingBox.botRight.y = p.y;
+        }
+
     }
 
     public canPlace(tile: Tile, move: Move): boolean {
