@@ -1,8 +1,19 @@
-export function getRandom<T>(list:T[]){
+export function pick<T>(list:T[]){
     if (list.length !== 0){
         const len = list.length;
         const index = Math.floor(Math.random() * len);
         return list[index];
+    }
+    else {
+        return undefined
+    }
+}
+
+export function pickAndRemove<T>(list:T[]){
+    if (list.length !== 0){
+        const len = list.length;
+        const index = Math.floor(Math.random() * len);
+        return list.splice(index,1)[0]; //remove element at index index from the list list
     }
     else {
         return undefined

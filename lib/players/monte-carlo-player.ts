@@ -1,13 +1,13 @@
 import { Board, Orientation, Move, Point } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
-import { getRandom, range } from '../util';
+import { pick, range } from '../util';
 import { displayBoard } from '../display';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
 
 /**
- * This player picks a move at random
+ * This player executes a simple MC algorithm
  */
 export class MonteCarloPlayer implements IPlayer {
     public readonly name: string = 'Carlo McMonte';
@@ -49,7 +49,7 @@ export class MonteCarloPlayer implements IPlayer {
 
             let drawnTile = tryDeck.drawTile();
             while (drawnTile !== undefined) {
-                const move = getRandom(tryBoard.getLegalMoves(drawnTile));
+                const move = pick(tryBoard.getLegalMoves(drawnTile));
                 tryBoard.place(drawnTile, move);
 
                 drawnTile = tryDeck.drawTile();

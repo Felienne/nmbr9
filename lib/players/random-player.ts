@@ -1,7 +1,7 @@
 import { Board, Orientation, Move } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
-import { getRandom } from '../util';
+import { pick } from '../util';
 import { displayBoard } from '../display';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
@@ -14,10 +14,9 @@ export class RandomPlayer implements IPlayer {
 
     public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
 
-        const loc = getRandom(board.getLegalMoves(tile));
+        const loc = pick(board.getLegalMoves(tile));
 
         if (loc) {
-            console.log("Hmmm... I think I'm going to play", loc)
             return loc;
         }
 

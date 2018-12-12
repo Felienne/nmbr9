@@ -50,6 +50,7 @@ export class Game {
 
                     const move = player.player.calculateMove(copiedBoard, copiedDeck, tile); 
                     if (move !== undefined) {
+                        console.log(player.player.name, "plays", move);
                         player.board.place(tile, move);
                     } else {
                         player.disqualified = true;
@@ -73,7 +74,7 @@ export class Game {
             console.log(`PLAYER: ${player.player.name}`);
             console.log('STATUS: ' + (player.disqualified ? `*disqualified* (${player.disqualificationReason})` : 'finished'));
             console.log(`SCORE:  ${player.board.score()}`);
-            console.log(`SPEED:  ${player.timer.average.toPrecision(3)}ms/turn`);
+            console.log(`SPEED:  ${player.timer.average.toFixed(3)}ms/turn`);
             console.log('BOARD:');
             console.log(displayBoard(player.board));
             console.log('');
