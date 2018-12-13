@@ -20,7 +20,7 @@ class Tree{
 
     //children contains the subtree that is formed from the board by making the corresponding move
     public readonly children: Map <Move, Tree> = new Map <Move, Tree>();
-    
+
     public readonly unexploredMoves: Move[];
 
     // The scoring statistics for this node and all of its children
@@ -73,7 +73,7 @@ class Tree{
             const boardAfterMove = new FastBoard(this.board);
             boardAfterMove.place(this.tile, toExplore);
 
-            // Determine the next tile to be played, and what's left becomes the 
+            // Determine the next tile to be played, and what's left becomes the
             // Deck.
             // TODO: Our life would be sooooooooo much easier if Deck was all the
             // tiles with a '.currentTile' accessor (or something)
@@ -134,6 +134,17 @@ interface PlayoutResult {
     score: number;
 }
 
+export interface MonteCarloOptions {
+    /**
+     * How many iterations to run
+     */
+    maxIterations?: number;
+
+    /**
+     * How many seconds to run, at most
+     */
+    maxThinkingTimeSec?: number;
+}
 
 /**
  * This player executes MC tree search
@@ -141,19 +152,23 @@ interface PlayoutResult {
 export class MonteCarloTreePlayer implements IPlayer {
     public readonly name: string = 'Willow McTreeFace';
 
-    public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
-        const seconds = 1000;
-        const thinkingTimeMs = 17 * 60 * seconds;
+    constructor(private readonly options: MonteCarloOptions) {
+        if (options.maxIterations === undefined && options.maxThinkingTimeSec === undefined) {
+            throw new Error('Supply at least maxIterations or maxThinkingTimeSec');
+        }
+    }
 
-        const deadline = Date.now() + thinkingTimeMs;
+    public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
+        const deadline = this.options.maxThinkingTimeSec !== undefined ? Date.now() + this.options.maxThinkingTimeSec * 1000 : undefined;
+        const maxIterations = this.options.maxIterations;
 
         const root = new Tree(board, tile, deck);
 
         let i = 0;
-        while (Date.now() <= deadline) {
+        while ((maxIterations === undefined || i < maxIterations)
+                && (deadline === undefined || Date.now() <= deadline)) {
             root.explore(i);
             i += 1;
-
         }
 
         return root.bestMove();

@@ -6,6 +6,15 @@ export interface tuple {
 }
 
 export class Deck {
+    /**
+     * Return a fixed Deck with the given cards
+     */
+    public static fixedDeck(cardValues: number[]) {
+        const ret = new Deck();
+        ret.allcards = cardValues;
+        return ret;
+    }
+
     private allcards:number[];
     private index:number;
 
@@ -47,11 +56,11 @@ export class Deck {
         if (drawnCard === false) {
             return undefined;
         }
-        
+
         const { turn, value }  = drawnCard;
         const t = getTile(value);
         t.turn = turn;
-        return t;        
+        return t;
     }
 
 
