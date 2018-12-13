@@ -1,7 +1,7 @@
 import { Board, Orientation, Move, Point } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
-import { pick, range, pickAndRemove, Timer } from '../util';
+import { pick, range, pickAndRemove, Timer, mean, sum } from '../util';
 import { displayBoard } from '../display';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
@@ -144,6 +144,11 @@ export interface MonteCarloOptions {
      * How many seconds to run, at most
      */
     maxThinkingTimeSec?: number;
+
+    /**
+     * Print tree statistics at the end of a move
+     */
+    printTreeStatistics?: boolean;
 }
 
 /**
@@ -171,34 +176,37 @@ export class MonteCarloTreePlayer implements IPlayer {
             i += 1;
         }
 
+        if (this.options.printTreeStatistics) {
+            this.printTreeStatistics(root);
+        }
+
         return root.bestMove();
     }
 
-    private maxScore(board: FastBoard, deck:Deck, t:Tile, p:Move): number{
-        const maxNumberofTries = 100;
-        //plaats deze tile op het bord in deze orientatie
-        board.place(t,p)
+    private printTreeStatistics(root: Tree) {
+        const stats: TreeStats = {
+            maxDepth: 0,
+            totalChildren: [],
+            unexploredChildren: [],
+        };
 
-        let maxScore = 0;
-
-        //nu gaan we voor deze plaatsing een aantal mogelijke trekkingen proberen
-        for (const i of range(maxNumberofTries)){
-            const tryDeck = new Deck(deck);
-            const tryBoard = new FastBoard(board);
-
-            let drawnTile = tryDeck.drawTile();
-            while (drawnTile !== undefined) {
-                const move = pick(tryBoard.getLegalMoves(drawnTile));
-                tryBoard.place(drawnTile, move);
-
-                drawnTile = tryDeck.drawTile();
+        function visit(node: Tree, depth: number) {
+            stats.maxDepth = Math.max(depth, stats.maxDepth);
+            stats.totalChildren.push(node.unexploredMoves.length + node.children.size);
+            stats.unexploredChildren.push(node.unexploredMoves.length);
+            for (const child of node.children.values()) {
+                visit(child, depth + 1);
             }
-
-            if (tryBoard.score() > maxScore){
-                maxScore = tryBoard.score();
-            }
-
         }
-        return maxScore;
+
+        visit(root, 0);
+
+        console.log(`Tree depth: ${stats.maxDepth}, nodes: ${sum(stats.totalChildren).toFixed(3)}, unexplored: ${sum(stats.unexploredChildren).toFixed(3)}`);
     }
+}
+
+interface TreeStats {
+    maxDepth: number;
+    totalChildren: number[];
+    unexploredChildren: number[];
 }

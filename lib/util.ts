@@ -73,3 +73,34 @@ export function timeIt(n: number, fn: () => void) {
     timer.end();
     return timer.totalMillis;
 }
+
+export function sum(xs: number[]): number {
+    return xs.reduce((a, b) => a + b, 0);
+}
+
+export function mean(xs: number[]): number {
+    const total = xs.reduce((a, b) => a + b, 0);
+    return total / xs.length;
+}
+
+export function standardDeviation(values: number[]){
+    const avg = mean(values);
+
+    const squareDiffs = values.map(value => {
+        const diff = value - avg;
+        const sqrDiff = diff * diff;
+        return sqrDiff;
+    });
+
+    const avgSquareDiff = mean(squareDiffs);
+
+    return Math.sqrt(avgSquareDiff);
+}
+
+export function flatMap<T, U>(xs: T[], f: (x: T) => U[]): U[] {
+    const ret: U[] = [];
+    for (const x of xs) {
+        ret.push(...f(x));
+    }
+    return ret;
+}

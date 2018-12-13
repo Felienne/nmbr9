@@ -3,7 +3,7 @@ import { Deck } from "./cards";
 import { Board } from "./board";
 import { FastBoard } from "./fast-board";
 import { setupMaster } from "cluster";
-import { range } from "./util";
+import { range, flatMap } from "./util";
 
 // Some decks that are always the same so that we can honestly evaluate
 // multiple runs of the same agent.
@@ -49,31 +49,4 @@ export function playStandardDecks(player: IPlayer, gamesPerDeck: number = 1): nu
     return flatMap(FIXED_DECKS, sourceDeck => {
         return playFixedDeck(player, sourceDeck, gamesPerDeck);
     });
-}
-
-export function mean(xs: number[]): number {
-    const total = xs.reduce((a, b) => a + b, 0);
-    return total / xs.length;
-}
-
-export function standardDeviation(values: number[]){
-    const avg = mean(values);
-
-    const squareDiffs = values.map(value => {
-        const diff = value - avg;
-        const sqrDiff = diff * diff;
-        return sqrDiff;
-    });
-
-    const avgSquareDiff = mean(squareDiffs);
-
-    return Math.sqrt(avgSquareDiff);
-}
-
-export function flatMap<T, U>(xs: T[], f: (x: T) => U[]): U[] {
-    const ret: U[] = [];
-    for (const x of xs) {
-        ret.push(...f(x));
-    }
-    return ret;
 }
