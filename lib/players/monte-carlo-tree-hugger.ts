@@ -143,7 +143,7 @@ export class MonteCarloTreePlayer implements IPlayer {
 
     public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
         const seconds = 1000;
-        const thinkingTimeMs = 30 * seconds;
+        const thinkingTimeMs = 17 * 60 * seconds;
 
         const deadline = Date.now() + thinkingTimeMs;
 

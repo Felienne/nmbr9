@@ -50,8 +50,8 @@ export class Game {
 
                     const move = player.player.calculateMove(copiedBoard, copiedDeck, tile); 
                     if (move !== undefined) {
-                        console.log(player.player.name, "plays", move);
                         player.board.place(tile, move);
+                        console.log(player.player.name, "plays", move, "(score so far:", player.board.score(), ")");
                     } else {
                         player.disqualified = true;
                         player.disqualificationReason = 'Player gave up';
