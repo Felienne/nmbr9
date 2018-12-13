@@ -24,8 +24,8 @@ export const FIXED_DECKS = [
 /**
  * Play a given deck N times, return the mean score
  */
-export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1): number {
-    return mean(range(times).map(i => {
+export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1): number[] {
+    return range(times).map(i => {
         const deck = new Deck(sourceDeck);
         const board = new FastBoard();
 
@@ -39,19 +39,41 @@ export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1
 
         console.log('Score: ', board.score());
         return board.score();
-    }));
+    });
 }
 
 /**
- * Evaluate a player and return an mean score for it
+ * Evaluate a player on a standardized set of decks and return all scores it got
  */
-export function testPlayer(player: IPlayer): number {
-    return mean(FIXED_DECKS.map(sourceDeck => {
-        return playFixedDeck(player, sourceDeck);
-    }));
+export function playStandardDecks(player: IPlayer, gamesPerDeck: number = 1): number[] {
+    return flatMap(FIXED_DECKS, sourceDeck => {
+        return playFixedDeck(player, sourceDeck, gamesPerDeck);
+    });
 }
 
-function mean(xs: number[]): number {
+export function mean(xs: number[]): number {
     const total = xs.reduce((a, b) => a + b, 0);
     return total / xs.length;
+}
+
+export function standardDeviation(values: number[]){
+    const avg = mean(values);
+
+    const squareDiffs = values.map(value => {
+        const diff = value - avg;
+        const sqrDiff = diff * diff;
+        return sqrDiff;
+    });
+
+    const avgSquareDiff = mean(squareDiffs);
+
+    return Math.sqrt(avgSquareDiff);
+}
+
+export function flatMap<T, U>(xs: T[], f: (x: T) => U[]): U[] {
+    const ret: U[] = [];
+    for (const x of xs) {
+        ret.push(...f(x));
+    }
+    return ret;
 }

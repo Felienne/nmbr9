@@ -1,6 +1,6 @@
 import { Game } from "./lib/game";
 import { MonteCarloTreePlayer } from "./lib/players/monte-carlo-tree-hugger";
-import { testPlayer, playFixedDeck, FIXED_DECKS } from "./lib/test-harness";
+import { playFixedDeck, FIXED_DECKS, mean, standardDeviation } from "./lib/test-harness";
 
 // Standardized test bench for the Willow player
 
@@ -10,6 +10,7 @@ const player = new MonteCarloTreePlayer({
 });
 
 //const avgScore = testPlayer(player);
-const avgScore = playFixedDeck(player, FIXED_DECKS[0], 10);
+const scores = playFixedDeck(player, FIXED_DECKS[0], 10);
 
-console.log('Mean score:', avgScore);
+console.log('Mean:  ', mean(scores));
+console.log('StdDev:', standardDeviation(scores));
