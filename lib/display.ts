@@ -17,7 +17,7 @@ export function displayBoard(board: IBoard) {
         lines.push(rowHeights.map((h, x) => {
             if (h === 0) { return chalk.hex('#5C5C5C')('.'); }
             const tileNr = board.tileValueAt(x, y);
-            return chalk.hex(TILE_COLORS[tileNr])(h);
+            return chalk.bgHex(TILE_COLORS[tileNr])(h);
         }).join(''));
     }
 
