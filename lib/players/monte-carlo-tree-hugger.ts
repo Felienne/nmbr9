@@ -201,7 +201,12 @@ export class MonteCarloTreePlayer implements IPlayer {
 
         visit(root, 0);
 
-        console.log(`Tree depth: ${stats.maxDepth}, nodes: ${sum(stats.totalChildren).toFixed(3)}, unexplored: ${sum(stats.unexploredChildren).toFixed(3)}`);
+        console.log([
+           `Tree depth: ${stats.maxDepth}`,
+           `total nodes: ${sum(stats.totalChildren).toFixed(0)}`,
+           `avg degree: ${mean(stats.totalChildren).toFixed(1)}`,
+           `unexplored: ${sum(stats.unexploredChildren).toFixed(0)}`
+        ].join(', '));
     }
 }
 
