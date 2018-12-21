@@ -1,12 +1,9 @@
-import { Board, Orientation, Move, Point } from '../board';
+import { Move } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
-import { pick, range, pickAndRemove, Timer, mean, sum } from '../util';
-import { displayBoard } from '../display';
+import { pick, pickAndRemove, mean, sum } from '../util';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
-import { moveCursor } from 'readline';
-import { DESTRUCTION } from 'dns';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
