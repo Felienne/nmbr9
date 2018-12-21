@@ -27,19 +27,29 @@ class Tree{
     public totalScore: number;
     public timesVisited: number;
 
+    private branchSelector?: BoardFunction;
+    private possibleMoveCount: number;
+
 
     public get meanScore(): number{
         return this.totalScore / this.timesVisited;
     }
 
-    constructor(board: FastBoard, tile:Tile | undefined, deck: Deck){
+    constructor(board: FastBoard, tile:Tile | undefined, deck: Deck, branchSelector?: BoardFunction){
         this.board = board;
         this.tile = tile;
         this.deck =  deck;
         this.totalScore = 0;
         this.timesVisited = 0;
+        this.branchSelector = branchSelector;
 
-        this.unexploredMoves = tile ? board.getLegalMoves(tile) : [];
+        if (tile) {
+            this.unexploredMoves = filterAcceptableMoves(board, tile, board.getLegalMoves(tile), deck, branchSelector);
+        } else {
+            this.unexploredMoves = [];
+        }
+
+        this.possibleMoveCount = this.unexploredMoves.length;
     }
 
     public bestMove(){
@@ -62,8 +72,8 @@ class Tree{
     }
 
     public explore(): PlayoutResult {
-        if (this.tile === undefined) {
-            // This is a leaf node. Just return the current score.
+        if (this.possibleMoveCount === 0) {
+            // This is a leaf node or all possible moves got pruned. Just return the current score.
             return { score: this.board.score() };
         }
 
@@ -71,7 +81,7 @@ class Tree{
         if (this.unexploredMoves.length !== 0){
             const toExplore = pickAndRemove(this.unexploredMoves)!;
             const boardAfterMove = new FastBoard(this.board);
-            boardAfterMove.place(this.tile, toExplore);
+            boardAfterMove.place(this.tile!, toExplore);
 
             // Determine the next tile to be played, and what's left becomes the
             // Deck.
@@ -80,7 +90,7 @@ class Tree{
             const deckAfterMove = new Deck(this.deck);
             const nextTile = deckAfterMove.drawTile();
 
-            const freshChild = new Tree(boardAfterMove, nextTile, deckAfterMove);
+            const freshChild = new Tree(boardAfterMove, nextTile, deckAfterMove, this.branchSelector);
             this.children.set(toExplore, freshChild);
 
             result = freshChild.randomPlayout();
@@ -108,7 +118,9 @@ class Tree{
         let tile = this.tile;
         while (tile !== undefined) {
             // Random move met tile
-            const move = pick(playoutBoard.getLegalMoves(tile));
+            const moves = filterAcceptableMoves(playoutBoard, tile, playoutBoard.getLegalMoves(tile), playoutDeck, this.branchSelector);
+            const move = pick(moves);
+
             if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
             playoutBoard.place(tile, move);
 
@@ -139,6 +151,20 @@ class Tree{
     }
 }
 
+function filterAcceptableMoves(startingBoard: FastBoard, tile: Tile, moves: Move[], remainingDeck: Deck, branchSelector?: BoardFunction) {
+    if (!branchSelector) {
+        return moves;
+    }
+
+    return moves.filter(move => {
+        const boardCopy = new FastBoard(startingBoard);
+        boardCopy.place(tile, move);
+        return branchSelector(boardCopy, remainingDeck);
+    });
+}
+
+export type BoardFunction = (board: FastBoard, deck: Deck) => boolean;
+
 interface PlayoutResult {
     score: number;
 }
@@ -158,6 +184,16 @@ export interface MonteCarloOptions {
      * Print tree statistics at the end of a move
      */
     printTreeStatistics?: boolean;
+
+    /**
+     * What tree branches should be explored
+     *
+     * If supplied, only branches for which the selection function returns
+     * true will be explored.
+     *
+     * If not supplied, all branches will be explored.
+     */
+    branchSelector?: BoardFunction;
 }
 
 /**
@@ -176,7 +212,7 @@ export class MonteCarloTreePlayer implements IPlayer {
         const deadline = this.options.maxThinkingTimeSec !== undefined ? Date.now() + this.options.maxThinkingTimeSec * 1000 : undefined;
         const maxIterations = this.options.maxIterations;
 
-        const root = new Tree(board, tile, deck);
+        const root = new Tree(board, tile, deck, this.options.branchSelector);
 
         let i = 0;
         while ((maxIterations === undefined || i < maxIterations)
