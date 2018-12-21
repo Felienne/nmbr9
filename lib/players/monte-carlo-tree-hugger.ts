@@ -24,21 +24,27 @@ class Tree{
     public totalScore: number;
     public timesVisited: number;
 
-    private branchSelector?: BoardFunction;
+    private branchSelector?: BoardFunction<boolean>;
+    private boardScoreTwiddler?: BoardFunction<number>;
     private possibleMoveCount: number;
-
 
     public get meanScore(): number{
         return this.totalScore / this.timesVisited;
     }
 
-    constructor(board: FastBoard, tile:Tile | undefined, deck: Deck, branchSelector?: BoardFunction){
+    constructor(
+            board: FastBoard,
+            tile:Tile | undefined,
+            deck: Deck,
+            branchSelector?: BoardFunction<boolean>,
+            boardScoreTwiddler?: BoardFunction<number>) {
         this.board = board;
         this.tile = tile;
         this.deck =  deck;
         this.totalScore = 0;
         this.timesVisited = 0;
         this.branchSelector = branchSelector;
+        this.boardScoreTwiddler = boardScoreTwiddler;
 
         if (tile) {
             this.unexploredMoves = filterAcceptableMoves(board, tile, board.getLegalMoves(tile), deck, branchSelector);
@@ -71,7 +77,7 @@ class Tree{
     public explore(): PlayoutResult {
         if (this.possibleMoveCount === 0) {
             // This is a leaf node or all possible moves got pruned. Just return the current score.
-            return { score: this.board.score() };
+            return { score: this.scoreForBoard(this.board) };
         }
 
         let result;
@@ -87,7 +93,7 @@ class Tree{
             const deckAfterMove = new Deck(this.deck);
             const nextTile = deckAfterMove.drawTile();
 
-            const freshChild = new Tree(boardAfterMove, nextTile, deckAfterMove, this.branchSelector);
+            const freshChild = new Tree(boardAfterMove, nextTile, deckAfterMove, this.branchSelector, this.boardScoreTwiddler);
             this.children.set(toExplore, freshChild);
 
             result = freshChild.randomPlayout();
@@ -98,7 +104,7 @@ class Tree{
                 // board is filled up to the brim. We score what's currently
                 // on the board.
                 // FIXME: Should we score 0 to penalize harder?
-                return { score: this.board.score() };
+                return { score: this.scoreForBoard(this.board) };
             }
             result = bestChild.explore();
         }
@@ -124,9 +130,16 @@ class Tree{
             tile = playoutDeck.drawTile();
         }
 
-        this.totalScore += playoutBoard.score();
+        this.totalScore += this.scoreForBoard(playoutBoard);
         this.timesVisited += 1;
-        return { score: playoutBoard.score() };
+        return { score: this.scoreForBoard(playoutBoard) };
+    }
+
+    private scoreForBoard(board: FastBoard) {
+        if (this.boardScoreTwiddler) {
+            return board.score() + this.boardScoreTwiddler(board);
+        }
+        return board.score();
     }
 
     private mostPromisingChild(totalGamesPlayed: number): Tree | undefined {
@@ -148,7 +161,7 @@ class Tree{
     }
 }
 
-function filterAcceptableMoves(startingBoard: FastBoard, tile: Tile, moves: Move[], remainingDeck: Deck, branchSelector?: BoardFunction) {
+function filterAcceptableMoves(startingBoard: FastBoard, tile: Tile, moves: Move[], remainingDeck: Deck, branchSelector?: BoardFunction<boolean>) {
     if (!branchSelector) {
         return moves;
     }
@@ -156,11 +169,11 @@ function filterAcceptableMoves(startingBoard: FastBoard, tile: Tile, moves: Move
     return moves.filter(move => {
         const boardCopy = new FastBoard(startingBoard);
         boardCopy.place(tile, move);
-        return branchSelector(boardCopy, remainingDeck);
+        return branchSelector(boardCopy);
     });
 }
 
-export type BoardFunction = (board: FastBoard, deck: Deck) => boolean;
+export type BoardFunction<T> = (board: FastBoard) => T;
 
 interface PlayoutResult {
     score: number;
@@ -190,7 +203,12 @@ export interface MonteCarloOptions {
      *
      * If not supplied, all branches will be explored.
      */
-    branchSelector?: BoardFunction;
+    branchSelector?: BoardFunction<boolean>;
+
+    /**
+     * Decide on whether to give additional or fewer points to a board position given the board
+     */
+    boardScoreTwiddler?: BoardFunction<number>;
 }
 
 /**
@@ -209,7 +227,7 @@ export class MonteCarloTreePlayer implements IPlayer {
         const deadline = this.options.maxThinkingTimeSec !== undefined ? Date.now() + this.options.maxThinkingTimeSec * 1000 : undefined;
         const maxIterations = this.options.maxIterations;
 
-        const root = new Tree(board, tile, deck, this.options.branchSelector);
+        const root = new Tree(board, tile, deck, this.options.branchSelector, this.options.boardScoreTwiddler);
 
         let i = 0;
         while ((maxIterations === undefined || i < maxIterations)
