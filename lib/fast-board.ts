@@ -62,9 +62,10 @@ export class FastBoard {
                 botRight: { x: source.boundingBox.botRight.x, y: source.boundingBox.botRight.y },
             };
         } else {
+            const mid = Math.floor(this.size / 2);
             this.boundingBox = {
-                topLeft: { x: 40, y: 40 },
-                botRight: { x: 40, y: 40 },
+                topLeft: { x: mid, y: mid },
+                botRight: { x: mid, y: mid },
             };
         }
     }
