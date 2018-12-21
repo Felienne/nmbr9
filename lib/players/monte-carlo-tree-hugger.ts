@@ -69,7 +69,7 @@ class Tree{
 
         let result;
         if (this.unexploredMoves.length !== 0){
-            const toExplore = pickAndRemove(this.unexploredMoves);
+            const toExplore = pickAndRemove(this.unexploredMoves)!;
             const boardAfterMove = new FastBoard(this.board);
             boardAfterMove.place(this.tile, toExplore);
 
@@ -85,7 +85,15 @@ class Tree{
 
             result = freshChild.randomPlayout();
         } else {
-            result = this.mostPromisingChild(this.timesVisited).explore();
+            const bestChild = this.mostPromisingChild(this.timesVisited);
+            if (bestChild === undefined) {
+                // There are no more moves to play here, probably because the
+                // board is filled up to the brim. We score what's currently
+                // on the board.
+                // FIXME: Should we score 0 to penalize harder?
+                return { score: this.board.score() };
+            }
+            result = bestChild.explore();
         }
 
         this.totalScore += result.score;
@@ -101,6 +109,7 @@ class Tree{
         while (tile !== undefined) {
             // Random move met tile
             const move = pick(playoutBoard.getLegalMoves(tile));
+            if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
             playoutBoard.place(tile, move);
 
             tile = playoutDeck.drawTile();
@@ -111,9 +120,9 @@ class Tree{
         return { score: playoutBoard.score() };
     }
 
-    private mostPromisingChild(totalGamesPlayed: number): Tree {
+    private mostPromisingChild(totalGamesPlayed: number): Tree | undefined {
         let maximumUCB = 0;
-        let bestChild;
+        let bestChild: Tree | undefined;
         for (const child of this.children.values()) {
             const ucb = child.upperConfidenceBound(totalGamesPlayed);
             if (ucb >= maximumUCB) {
@@ -121,7 +130,7 @@ class Tree{
                 bestChild = child;
             }
         }
-        return bestChild;
+        return bestChild!;
     }
 
     private upperConfidenceBound(totalGamesPlayed: number) {

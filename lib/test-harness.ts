@@ -32,6 +32,7 @@ export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1
         let tile = deck.drawTile();
         while (tile !== undefined) {
             const move = player.calculateMove(board, deck, tile);
+            if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
             board.place(tile, move);
 
             tile = deck.drawTile();

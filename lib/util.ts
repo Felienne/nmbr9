@@ -38,6 +38,7 @@ export class Timer {
     }
 
     public end() {
+        if (this.startTime === undefined) { throw new Error('Forgot to start()'); }
         const end = process.hrtime();
         const delta = (end[0] * 1000 + end[1] / 1E6) - (this.startTime[0] * 1000 + this.startTime[1] / 1E6);
 

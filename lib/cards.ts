@@ -47,7 +47,7 @@ export class Deck {
         }
         else{
             const returnValue = this.allcards.pop();
-            return {turn: this.index, value: returnValue}
+            return { turn: this.index, value: returnValue! };
         }
     }
 

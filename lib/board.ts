@@ -24,7 +24,7 @@ export class Board {
     // dmv het hele tegelobject
     // dat is nodig om te bepalen of er niet op 1 tegel gestapeld wordt
 
-    private readonly tileTurns : Tile[][] = [];
+    private readonly tileTurns : Array<Array<Tile | undefined>> = [];
 
     // bounding box limits the locations that we have to check
     private readonly boundingBox: Box;
@@ -142,7 +142,7 @@ export class Board {
         // als we op een hogere verdieping liggen (niet 0), dan moeten er minstens 2 instanties (turn-numbers) onder liggen
 
         //we kijken in tileTurns wat er onder deze tegel komt te liggen
-        const tileTurnsBelow: number[] = boardLocations.map(getTile).filter(x=> x !== undefined).map(x => x.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
+        const tileTurnsBelow: number[] = boardLocations.map(getTile).filter(x=> x !== undefined).map(x => x!.turn) //een lijst van alle turns (id's) die 'onder' deze form liggen
 
         //we gebruiken een truukje vergelijkbaar met wat we bij balanced doen
         //we pakken element 0, en er moet er minstens eentje anders zijn dan elem 1
@@ -192,7 +192,7 @@ export class Board {
     }
 
     public tileValueAt(x: number, y: number): number {
-        return this.tileTurns[y][x].value;
+        return this.tileTurns[y][x]!.value;
     }
 
 }

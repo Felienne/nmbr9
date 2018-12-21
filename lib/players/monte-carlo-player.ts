@@ -14,7 +14,7 @@ export class MonteCarloPlayer implements IPlayer {
 
     public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
 
-        const moves = board.getLegalMoves(tile); 
+        const moves = board.getLegalMoves(tile);
         let maxMoveScore = 0;
         let maxMove = undefined;
         for (const m of moves){
@@ -50,6 +50,7 @@ export class MonteCarloPlayer implements IPlayer {
             let drawnTile = tryDeck.drawTile();
             while (drawnTile !== undefined) {
                 const move = pick(tryBoard.getLegalMoves(drawnTile));
+                if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
                 tryBoard.place(drawnTile, move);
 
                 drawnTile = tryDeck.drawTile();
