@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "go": "tsc && node main",
+    "go-benchmark": "tsc && node willow-tester",
     "test": "jest"
   },
   "repository": {

@@ -5,10 +5,10 @@ import { range } from "./util";
  * Return a nice colorized stringification of the board
  */
 export function displayBoard(board: IBoard) {
-    const span = range(80);
+    const span = range(board.size);
 
     const lines: string[] = [];
-    for (let y = 0; y < 80; y++) {
+    for (let y = 0; y < board.size; y++) {
         const rowHeights = span.map(x => board.heightAt(x, y));
 
         // Skip empty rows
@@ -25,6 +25,7 @@ export function displayBoard(board: IBoard) {
 }
 
 interface IBoard {
+    readonly size:number;
     heightAt(x: number, y: number): number;
     tileValueAt(x: number, y: number): number;
 }

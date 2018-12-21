@@ -1,9 +1,6 @@
 import { Tile } from "./tile";
 import { Move, Point, Box, Orientation } from "./board";
 
-const WIDTH = 80;
-const HEIGHT = 80;
-
 export const TILE_WIDTH = 5;
 export const TILE_HEIGHT = 6;
 
@@ -25,6 +22,11 @@ export const TILE_HEIGHT = 6;
  * the highest number we need to store is 209 which fits in 8 bits.
  */
 export class FastBoard {
+     /**
+     * Size of the field which can be played on 
+     */
+    public readonly size = 40;
+
     /**
      * Memory for the height map
      */
@@ -49,8 +51,8 @@ export class FastBoard {
     private readonly boundingBox: Box;
 
     constructor(source?: FastBoard) {
-        this.heightMap = (source && source.heightMap.slice(0)) || new Uint8Array(WIDTH * HEIGHT);
-        this.tileMap = (source && source.tileMap.slice(0)) || new Uint8Array(WIDTH * HEIGHT);
+        this.heightMap = (source && source.heightMap.slice(0)) || new Uint8Array(this.size * this.size);
+        this.tileMap = (source && source.tileMap.slice(0)) || new Uint8Array(this.size * this.size);
         this._maxHeight = source ? source._maxHeight : 0;
         this._score = source ? source._score : 0;
 
@@ -100,7 +102,7 @@ export class FastBoard {
         }
 
         // Make sure that we don't fail our calculation down the line
-        // if tile.turn ends up unset.
+        // if tile.turn ends up unset
         if (isNaN(tile.turn)) tile.turn = 1;
 
         const ixes = this.positionsToIndexes(tile.getOnes(place.orientation), place);
@@ -200,12 +202,12 @@ export class FastBoard {
     }
 
     public heightAt(x: number, y: number): number {
-        return this.heightMap[y * WIDTH + x];
+        return this.heightMap[y * this.size + x];
     }
 
     public tileValueAt(x: number, y: number): number {
         // Strip away the turn info and get the tile value
-        return this.tileMap[y * WIDTH + x] % 10;
+        return this.tileMap[y * this.size + x] % 10;
     }
 
     /**
@@ -218,8 +220,8 @@ export class FastBoard {
         for (const pt of pts) {
             const x = origin.x + pt.x;
             const y = origin.y + pt.y;
-            if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) continue;
-            ret.push(y * WIDTH + x);
+            if (x < 0 || x >= this.size || y < 0 || y >= this.size) continue;
+            ret.push(y * this.size + x);
         }
         return ret;
     }

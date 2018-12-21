@@ -61,7 +61,7 @@ class Tree{
         return bestMove;
     }
 
-    public explore(totalGamesPlayed: number): PlayoutResult {
+    public explore(): PlayoutResult {
         if (this.tile === undefined) {
             // This is a leaf node. Just return the current score.
             return { score: this.board.score() };
@@ -85,7 +85,7 @@ class Tree{
 
             result = freshChild.randomPlayout();
         } else {
-            result = this.mostPromisingChild(totalGamesPlayed).explore(totalGamesPlayed);
+            result = this.mostPromisingChild(this.timesVisited).explore();
         }
 
         this.totalScore += result.score;
@@ -172,7 +172,7 @@ export class MonteCarloTreePlayer implements IPlayer {
         let i = 0;
         while ((maxIterations === undefined || i < maxIterations)
                 && (deadline === undefined || Date.now() <= deadline)) {
-            root.explore(i);
+            root.explore();
             i += 1;
         }
 

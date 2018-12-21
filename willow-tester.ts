@@ -16,3 +16,7 @@ const scores = playFixedDeck(player, FIXED_DECKS[0], 10);
 
 console.log('Mean:  ', mean(scores));
 console.log('StdDev:', standardDeviation(scores));
+
+// Run op 80x80
+// Mean:   11.6
+// StdDev: 7.213875518748574

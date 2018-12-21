@@ -9,6 +9,8 @@ export enum Orientation {
 
 export class Board {
 
+    public readonly size:number;
+
     private _score : number;
 
     //we gebruiken 2 losse datastructuren om het bord te representeren
