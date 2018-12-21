@@ -137,7 +137,7 @@ class Tree{
 
     private scoreForBoard(board: FastBoard) {
         if (this.boardScoreTwiddler) {
-            return board.score() + this.boardScoreTwiddler(board);
+            return Math.max(0, board.score() + this.boardScoreTwiddler(board));
         }
         return board.score();
     }
