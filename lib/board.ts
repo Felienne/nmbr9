@@ -113,6 +113,10 @@ export class Board {
         }
     }
 
+    public printExtraInfo(): string {
+        return  '';
+    }
+
     /**
      * Return whether the given tile can be placed here
      */

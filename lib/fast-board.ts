@@ -1,5 +1,6 @@
 import { Tile } from "./tile";
 import { Move, Point, Box, Orientation } from "./board";
+import { setFlagsFromString } from "v8";
 
 export const TILE_WIDTH = 5;
 export const TILE_HEIGHT = 6;
@@ -25,7 +26,7 @@ export class FastBoard {
      /**
      * Size of the field which can be played on 
      */
-    public readonly size = 40;
+    public readonly size = 15;
 
     /**
      * Memory for the height map
@@ -225,5 +226,85 @@ export class FastBoard {
             ret.push(y * this.size + x);
         }
         return ret;
+    }
+
+    public sizeOfBoundingBox():number{
+        const b = this.boundingBox
+        const size = (b.topLeft.x - b.botRight.x) * (b.topLeft.y - b.botRight.y)
+        return size;
+    }
+
+
+    public printExtraInfo(): string {
+        return `Holes: ${this.holesAt(0)}`;
+    }
+
+    public holesAt(level:number):number{
+        const gatenMap = new Uint8Array(this.heightMap.length);
+
+        const size = this.size;
+
+        function localHeightAt(x: number, y: number): number {
+            return gatenMap[y * size + x];
+        }
+
+        function setAt(x: number, y: number, value:number){
+            gatenMap[y * size + x] = value;
+        }
+
+        const holesToCheck = new Array<Point>();
+
+        const self = this;
+        function isSleuf(p:Point):boolean{
+            if (p.y !== self.boundingBox.topLeft.y && p.y != self.boundingBox.botRight.y && self.heightAt(p.x, p.y-1) > 0 && self.heightAt(p.x, p.y+1) > 0){
+                return true;
+            }
+            if (p.x !== self.boundingBox.topLeft.x && p.x != self.boundingBox.botRight.x && self.heightAt(p.x-1, p.y) > 0 && self.heightAt(p.x+1, p.y) > 0){
+                return true;
+            }
+            return false;
+        }
+
+        for (let x = this.boundingBox.topLeft.x; x <= this.boundingBox.botRight.x; x++) {
+            for (let y = this.boundingBox.topLeft.y; y <= this.boundingBox.botRight.y; y++) {
+                if (this.heightAt(x, y) === 0) {                // Hole?
+                    if (x === this.boundingBox.topLeft.x || x === this.boundingBox.botRight.x
+                        || y === this.boundingBox.topLeft.y || y === this.boundingBox.botRight.y)  // At edge?
+                    {
+                        setAt(x, y, isSleuf({x,y})? 2 : 1);
+                    } else {
+                        holesToCheck.push({ x, y });
+                    }
+                }
+            }
+        }
+
+
+
+        function isReachableFromEdge(p:Point):number{
+            return Math.max(localHeightAt(p.x, p.y-1), localHeightAt(p.x, p.y+1), localHeightAt(p.x-1, p.y), localHeightAt(p.x+1, p.y))
+            
+        }
+
+        let madeChanges = true;
+        while (holesToCheck.length > 0 && madeChanges) {
+            madeChanges = false;
+
+            let i = 0;
+            while (i < holesToCheck.length) {
+                const holeToCheck = holesToCheck[i];
+                const isEdge = isReachableFromEdge(holeToCheck)
+
+                if (isEdge) {
+                    setAt(holeToCheck.x, holeToCheck.y, Math.max(isSleuf(holeToCheck)?2:1,isEdge));
+                    holesToCheck.splice(i, 1);
+                    madeChanges = true;
+                } else {
+                    i++;
+                }
+            }
+        }
+
+        return holesToCheck.length + gatenMap.filter(x => x >= 2).length;
     }
 }

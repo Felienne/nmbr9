@@ -21,6 +21,7 @@ export function displayBoard(board: IBoard) {
         }).join(''));
     }
 
+    lines.push(board.printExtraInfo());;
     return lines.join('\n') + '\n';
 }
 
@@ -28,6 +29,7 @@ interface IBoard {
     readonly size:number;
     heightAt(x: number, y: number): number;
     tileValueAt(x: number, y: number): number;
+    printExtraInfo(): string;
 }
 
 export const TILE_COLORS = [

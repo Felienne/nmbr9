@@ -25,7 +25,7 @@ class Tree{
     public timesVisited: number;
 
     private branchSelector?: BoardFunction<boolean>;
-    private boardScoreTwiddler?: BoardFunction<number>;
+    private boardScoreCalculator?: BoardFunction<number>;
     private possibleMoveCount: number;
 
     public get meanScore(): number{
@@ -37,14 +37,14 @@ class Tree{
             tile:Tile | undefined,
             deck: Deck,
             branchSelector?: BoardFunction<boolean>,
-            boardScoreTwiddler?: BoardFunction<number>) {
+            boardScoreCalculator?: BoardFunction<number>) {
         this.board = board;
         this.tile = tile;
         this.deck =  deck;
         this.totalScore = 0;
         this.timesVisited = 0;
         this.branchSelector = branchSelector;
-        this.boardScoreTwiddler = boardScoreTwiddler;
+        this.boardScoreCalculator = boardScoreCalculator;
 
         if (tile) {
             this.unexploredMoves = filterAcceptableMoves(board, tile, board.getLegalMoves(tile), deck, branchSelector);
@@ -93,7 +93,7 @@ class Tree{
             const deckAfterMove = new Deck(this.deck);
             const nextTile = deckAfterMove.drawTile();
 
-            const freshChild = new Tree(boardAfterMove, nextTile, deckAfterMove, this.branchSelector, this.boardScoreTwiddler);
+            const freshChild = new Tree(boardAfterMove, nextTile, deckAfterMove, this.branchSelector, this.boardScoreCalculator);
             this.children.set(toExplore, freshChild);
 
             result = freshChild.randomPlayout();
@@ -136,8 +136,8 @@ class Tree{
     }
 
     private scoreForBoard(board: FastBoard) {
-        if (this.boardScoreTwiddler) {
-            return Math.max(0, board.score() + this.boardScoreTwiddler(board));
+        if (this.boardScoreCalculator) {
+            return Math.max(0, this.boardScoreCalculator(board));
         }
         return board.score();
     }
@@ -208,7 +208,7 @@ export interface MonteCarloOptions {
     /**
      * Decide on whether to give additional or fewer points to a board position given the board
      */
-    boardScoreTwiddler?: BoardFunction<number>;
+    boardScoreCalculator?: BoardFunction<number>;
 }
 
 /**
@@ -227,7 +227,7 @@ export class MonteCarloTreePlayer implements IPlayer {
         const deadline = this.options.maxThinkingTimeSec !== undefined ? Date.now() + this.options.maxThinkingTimeSec * 1000 : undefined;
         const maxIterations = this.options.maxIterations;
 
-        const root = new Tree(board, tile, deck, this.options.branchSelector, this.options.boardScoreTwiddler);
+        const root = new Tree(board, tile, deck, this.options.branchSelector, this.options.boardScoreCalculator);
 
         let i = 0;
         while ((maxIterations === undefined || i < maxIterations)
