@@ -3,7 +3,7 @@ import { Deck } from "./cards";
 import { Board } from "./board";
 import { FastBoard } from "./fast-board";
 import { setupMaster } from "cluster";
-import { range, flatMap } from "./util";
+import { range, flatMap, mean, standardDeviation } from "./util";
 
 // Some decks that are always the same so that we can honestly evaluate
 // multiple runs of the same agent.
@@ -24,7 +24,8 @@ export const FIXED_DECKS = [
 /**
  * Play a given deck N times, return the mean score
  */
-export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1): number[] {
+export function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1): (undefined | number)[] {
+    let numberOfFails = 0;
     return range(times).map(i => {
         const deck = new Deck(sourceDeck);
         const board = new FastBoard();
@@ -32,22 +33,64 @@ export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1
         let tile = deck.drawTile();
         while (tile !== undefined) {
             const move = player.calculateMove(board, deck, tile);
-            if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
+            if (move === undefined) { 
+                if (deck.remainingCards.length===0){
+                    //if we have just 1 tile left, we could always place it at 0 and continue with just this score
+                    //not a real big issue, just log and end game
+                    console.log("Failed game with 0 tiles remaining (counted as finished).") 
+                    break;
+                }else{
+                    console.log("Failed game with", deck.remainingCards.length, " tiles remaining. Score so far was:", board.score())
+                    return undefined; // End of game. FIXME: Should we score 0 to penalize harder?
+                }
+
+            } 
             board.place(tile, move);
 
             tile = deck.drawTile();
         }
 
+        console.log(`Deck played ${i+1} out of ${times} times`)
         console.log('Score: ', board.score());
+        console.log('Holes: ', board.holesAt(0))
         return board.score();
     });
+}
+
+export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1){
+    function filterNotUndefined(y:(number|undefined)[]):number[]{
+        const ret:number[] = [];
+        y.forEach(x => {
+            if (x !== undefined){
+                ret.push(x);
+            }
+        });
+        return ret;
+    }
+
+    const scores_of_this_deck = runDeck(player, sourceDeck, times);
+    //const header =  'deck, #plays per deck, mean, stdev, iterations, selectorstring'
+    const valid_scores = filterNotUndefined(scores_of_this_deck)
+    //.filter(x => x !== undefined) does not make the typechecker happy :/
+    const fails = scores_of_this_deck.splice(0).filter(x => x === undefined).length;
+
+    const stat:string = `[${sourceDeck.cardOrder}], ${times}, ${fails}, ${mean(valid_scores)}, ${standardDeviation(valid_scores)}, ${player.printIterationsAndSelector()}`;
+    return stat;
 }
 
 /**
  * Evaluate a player on a standardized set of decks and return all scores it got
  */
-export function playStandardDecks(player: IPlayer, gamesPerDeck: number = 1): number[] {
-    return flatMap(FIXED_DECKS, sourceDeck => {
-        return playFixedDeck(player, sourceDeck, gamesPerDeck);
-    });
+export function playStandardDecks(player: IPlayer, gamesPerDeck: number = 1): string {
+    let allStats = '';
+    let i = 0;
+    
+    FIXED_DECKS.forEach(sourceDeck => {
+       const stat = playFixedDeck(player, sourceDeck, gamesPerDeck)
+       allStats += stat;
+       allStats += '\n';
+       console.log(`Deck ${i+1} finished (out of ${FIXED_DECKS.length} decks)`)
+       i++;
+    })
+    return allStats;
 }

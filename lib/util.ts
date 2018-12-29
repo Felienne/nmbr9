@@ -81,7 +81,7 @@ export function sum(xs: number[]): number {
 
 export function mean(xs: number[]): number {
     const total = xs.reduce((a, b) => a + b, 0);
-    return total / xs.length;
+    return Math.round(total / xs.length);
 }
 
 export function standardDeviation(values: number[]){
@@ -95,7 +95,7 @@ export function standardDeviation(values: number[]){
 
     const avgSquareDiff = mean(squareDiffs);
 
-    return Math.sqrt(avgSquareDiff);
+    return Math.sqrt(avgSquareDiff).toFixed(2);
 }
 
 export function flatMap<T, U>(xs: T[], f: (x: T) => U[]): U[] {

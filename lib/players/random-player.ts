@@ -23,4 +23,8 @@ export class RandomPlayer implements IPlayer {
         console.log("Oh blimey. Apparently I didn't find any possible moves?");
         return undefined;
     }
+
+    public printIterationsAndSelector(){
+        return 'determined by a fair dice roll';
+    }
 }

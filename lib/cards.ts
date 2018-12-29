@@ -12,11 +12,13 @@ export class Deck {
     public static fixedDeck(cardValues: number[]) {
         const ret = new Deck();
         ret.allcards = cardValues;
+        ret.cardOrder = cardValues;
         return ret;
     }
 
     private allcards:number[];
     private index:number;
+    public cardOrder:number[]=[];
 
     public constructor(d?:Deck)
     {
@@ -37,6 +39,7 @@ export class Deck {
             const j = Math.floor(Math.random() * (i + 1));
             [this.allcards[i], this.allcards[j]] = [this.allcards[j], this.allcards[i]];
         }
+        this.cardOrder = this.allcards.slice();
     }
 
     public draw():tuple|false

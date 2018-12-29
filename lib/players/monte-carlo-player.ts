@@ -12,6 +12,10 @@ import { FastBoard } from '../fast-board';
 export class MonteCarloPlayer implements IPlayer {
     public readonly name: string = 'Carlo McMonte';
 
+    public printIterationsAndSelector(){
+        return 'determined by a fair dice roll';
+    }
+
     public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
 
         const moves = board.getLegalMoves(tile);

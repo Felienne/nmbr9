@@ -4,6 +4,8 @@ import { IPlayer } from "../player";
 import { pick, pickAndRemove, mean, sum } from '../util';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
+import { stream } from 'fast-check';
+import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from 'constants';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
@@ -135,11 +137,19 @@ class Tree{
         return { score: this.scoreForBoard(playoutBoard) };
     }
 
-    private scoreForBoard(board: FastBoard) {
+    private scoreForBoard(board: FastBoard):number {
         if (this.boardScoreCalculator) {
             return Math.max(0, this.boardScoreCalculator(board));
         }
-        return board.score();
+        let score = board.score();
+        if (score !== undefined){
+            return score;
+        }
+        else
+        {
+            return 0;
+        }
+
     }
 
     private mostPromisingChild(totalGamesPlayed: number): Tree | undefined {
@@ -204,11 +214,13 @@ export interface MonteCarloOptions {
      * If not supplied, all branches will be explored.
      */
     branchSelector?: BoardFunction<boolean>;
+    branchSelectorString?: string;
 
     /**
      * Decide on whether to give additional or fewer points to a board position given the board
      */
     boardScoreCalculator?: BoardFunction<number>;
+    boardScoreCalculatorString?: string;
 }
 
 /**
@@ -242,6 +254,12 @@ export class MonteCarloTreePlayer implements IPlayer {
 
         return root.bestMove();
     }
+
+    public printIterationsAndSelector(){
+        return `${this.options.maxIterations}, ${this.options.branchSelectorString}, ${this.options.boardScoreCalculatorString}`;
+    }
+
+
 
     private printTreeStatistics(root: Tree) {
         const stats: TreeStats = {

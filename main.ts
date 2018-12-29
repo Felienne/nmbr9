@@ -10,14 +10,21 @@ function boardCalculator(board: FastBoard):number{
     return 50 + board.score()*2 - board.holesAt(0)*3; //reward for less holes
 }
 
+function selector(board: FastBoard):boolean{
+        const select = board.holesAt(0) < 20;
+        return select;
+    }
+
 
 
 const game = new Game([
     new RandomPlayer(),
     new MonteCarloTreePlayer({
-        maxIterations: 1000,
+        maxIterations: 10,
         printTreeStatistics: true,
-        boardScoreCalculator: boardCalculator
+        boardScoreCalculator: boardCalculator,
+        branchSelector: selector
+
     }),
 //    new MonteCarloPlayer(),
 ]);
@@ -25,3 +32,5 @@ const game = new Game([
 game.play();
 
 game.report();
+
+

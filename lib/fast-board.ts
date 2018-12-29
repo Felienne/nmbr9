@@ -26,7 +26,7 @@ export class FastBoard {
      /**
      * Size of the field which can be played on 
      */
-    public readonly size = 15;
+    public readonly size = 20
 
     /**
      * Memory for the height map
@@ -48,6 +48,9 @@ export class FastBoard {
      */
     private _score : number;
 
+    //number of turns played (used in the pruning function)
+    public turnsPlayed: number;
+
     // bounding box limits the locations that we have to check
     private readonly boundingBox: Box;
 
@@ -56,6 +59,7 @@ export class FastBoard {
         this.tileMap = (source && source.tileMap.slice(0)) || new Uint8Array(this.size * this.size);
         this._maxHeight = source ? source._maxHeight : 0;
         this._score = source ? source._score : 0;
+        this.turnsPlayed = source ? source.turnsPlayed : 0;
 
         if (source) {
             this.boundingBox = {
@@ -133,7 +137,7 @@ export class FastBoard {
             if (p.y < this.boundingBox.topLeft.y) this.boundingBox.topLeft.y = p.y;
             if (p.y > this.boundingBox.botRight.y) this.boundingBox.botRight.y = p.y;
         }
-
+        this.turnsPlayed += 1;
     }
 
     public canPlace(tile: Tile, move: Move): boolean {
@@ -229,11 +233,20 @@ export class FastBoard {
     }
 
     public sizeOfBoundingBox():number{
-        const b = this.boundingBox
-        const size = (b.topLeft.x - b.botRight.x) * (b.topLeft.y - b.botRight.y)
+        const b = this.boundingBox;
+        const size = this.widthOfBoudingBox() * this.heightOfBoundingBox();
         return size;
     }
 
+    public widthOfBoudingBox():number{
+        const b = this.boundingBox
+        return b.botRight.x - b.topLeft.x;
+    }
+
+    public heightOfBoundingBox():number{
+        const b = this.boundingBox
+        return b.botRight.y - b.topLeft.y;
+    }
 
     public printExtraInfo(): string {
         return `Holes: ${this.holesAt(0)}`;
