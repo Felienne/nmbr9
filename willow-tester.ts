@@ -7,21 +7,26 @@ import { FastBoard } from "./lib/fast-board";
 // Standardized test bench for the Willow player
 
 function boardCalculator(board: FastBoard):number{
-    return board.score(); 
+    return board.score() + board.maxHeight()*5 
 }
 
 function selector(board: FastBoard):boolean{
+    const maxSize = 12;
+    const sizeOK = board.widthOfBoudingBox() < maxSize && board.heightOfBoundingBox() < maxSize;
+
     if (board.turnsPlayed < 5){
-        return board.holesAt(0) < 6;
+        return board.holesAt(0) <= 6 ;
     }
     else{
-        const maxSize = 12;
-        return board.widthOfBoudingBox() < maxSize && board.heightOfBoundingBox() < maxSize;
+            return board.holesAt(0) <= 20 && sizeOK;
     }
     
     //met een veld van max 15 (een van de twee) krijg je nog steeds wel 48 gaten! 
     //dus: veld nog kleiner maken
-    //of toch ook selecteren op gaten, hieronder:
+    //of toch ook selecteren op gaten?
+    // met 13 zijn er ook nog wel wat 20+ en zelfs 30 gaten nog ff proberen met gatselectie en 13
+    //dat was niet beter (zie output)
+    //nu weer 12 en eens extra belonen voor hoogte
 
     // const maxSize = 12;
     // const sizeOk = board.widthOfBoudingBox() < maxSize || board.heightOfBoundingBox() < maxSize;
@@ -45,7 +50,7 @@ function selector(board: FastBoard):boolean{
     // if (board.turnsPlayed < 5){
     //     return board.holesAt(0) < 6;
     // }
-    // else{c
+    // else{
     //     if (board.turnsPlayed < 10){
     //         return board.holesAt(0) < 12;
     //     }
@@ -64,11 +69,11 @@ function selector(board: FastBoard):boolean{
 
 const player = new MonteCarloTreePlayer({
     // Iterations so we don't depend on CPU speed for results
-    maxIterations: 100,
+    maxIterations: 1000,
     printTreeStatistics: true,
     boardScoreCalculator: boardCalculator,
-    branchSelectorString: '>5 turns width and height < 12',
-    boardScoreCalculatorString: 'board.score()', 
+    branchSelectorString: '<5: turns < 6 holes & >5: size 12 & holes<20',
+    boardScoreCalculatorString: 'board.score() + board.maxHeight()*5', 
     branchSelector: selector
 });
 
@@ -81,8 +86,6 @@ console.log(stats);
 
 const fs = require('fs');
 
-
-// write to a new file named 2pac.txt
 fs.appendFile('willow-stats.txt', stats + '\n', (err:any) => {  
     // throws an error, you could also catch it here
     if (err) throw err;

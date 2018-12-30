@@ -41,6 +41,7 @@ deck, #plays per deck, failed games, mean, stdev, iterations, selectorstring, bo
 [9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 32, 5.20, 100, board.holesAt 6 then width and height < 10, board.score()
 [9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 43, 7.35, 100, board.holesAt 6 then width and height < 12, board.score()
 [9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 43, 7.87, 100, board.holesAt and heightselection as before, and >5 turns width and height < 12, board.score()
+
 [2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 44, 14.56, 100, >5 turns width and height < 12, board.score()
 [6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 50, 10.58, 100, >5 turns width and height < 12, board.score()
 [1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 42, 9.00, 100, >5 turns width and height < 12, board.score()
@@ -52,4 +53,150 @@ deck, #plays per deck, failed games, mean, stdev, iterations, selectorstring, bo
 [9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 38, 10.00, 100, >5 turns width and height < 12, board.score()
 [9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 61, 11.27, 100, >5 turns width and height < 12, board.score()
 [0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 45, 1.00, 100, >5 turns width and height < 12, board.score()
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 22, 13.30, 100, >5 turns width and height < 10, board.score()
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 28, 2.45, 100, >5 turns width and height < 10, board.score()
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 39, 4.47, 100, >5 turns width and height < 10, board.score()
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 24, 3.16, 100, >5 turns width and height < 10, board.score()
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 56, 11.22, 100, >5 turns width and height < 10, board.score()
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 34, 2.24, 100, >5 turns width and height < 10, board.score()
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 28, 9.33, 100, >5 turns width and height < 10, board.score()
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 53, 4.90, 100, >5 turns width and height < 10, board.score()
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 28, 3.16, 100, >5 turns width and height < 10, board.score()
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 39, 19.67, 100, >5 turns width and height < 10, board.score()
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 42, 8.89, 100, >5 turns width and height < 10, board.score()
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 43, 8.25, 100, >5 turns width and height < 13, board.score()
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 64, 9.22, 100, >5 turns width and height < 13, board.score()
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 46, 5.00, 100, >5 turns width and height < 13, board.score()
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 48, 9.27, 100, >5 turns width and height < 13, board.score()
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 46, 7.48, 100, >5 turns width and height < 13, board.score()
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 40, 3.46, 100, >5 turns width and height < 13, board.score()
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 45, 2.45, 100, >5 turns width and height < 13, board.score()
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 37, 2.83, 100, >5 turns width and height < 13, board.score()
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 35, 2.00, 100, >5 turns width and height < 13, board.score()
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 48, 5.48, 100, >5 turns width and height < 13, board.score()
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 35, 3.87, 100, >5 turns width and height < 13, board.score()
+
+ [2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 35, 6.56, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 44, 5.20, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 34, 5.74, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 43, 6.86, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 42, 8.77, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 45, 5.57, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 35, 5.83, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 39, 7.87, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 36, 3.87, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 41, 3.87, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 33, 3.00, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 13, board.score()
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 30, 4.58, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 39, 7.07, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 32, 3.32, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 39, 8.54, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 36, 6.16, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 46, 6.32, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 40, 12.04, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 41, 4.47, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 34, 6.16, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 40, 6.86, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 37, 11.45, 100, >5 turns width and gatenselectie als eerder (board.holesAt 6, 12, 15, 20 and heights, 0, 0, 1, 2) height < 12, board.score()
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 49, 11.36, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 64, 4.00, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 47, 2.65, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 49, 13.93, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 48, 11.36, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 35, 11.49, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 48, 12.77, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 43, 6.56, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 37, 7.75, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 48, 12.21, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 44, 8.49, 100, >5 turns width and height < 12, board.score() + board.maxHeight()*3
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 54, 9.43, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 53, 13.38, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 50, 4.00, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 49, 7.94, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 42, 5.20, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 42, 14.32, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 48, 12.12, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 52, 6.08, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 38, 5.92, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 45, 14.21, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 37, 5.66, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 48, 6.56, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 61, 8.60, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 46, 3.00, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 44, 17.00, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 60, 12.17, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 49, 6.93, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 56, 14.73, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 53, 14.73, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 34, 5.92, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 52, 6.56, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 50, 6.08, 100, <5 turns < 4 holes & width and height < 12, board.score() + board.maxHeight()*5
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 28, 11.18, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 52, 7.55, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 40, 7.28, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 48, 6.63, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 39, 4.80, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 53, 11.79, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 44, 4.69, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 39, 6.48, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 26, 6.86, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 44, 7.94, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 26, 8.25, 100, <5: turns < 4 holes & size 8 >10: height > 1 and 10 holes and size 12 >15: height > 1 and 20 holes and size 12, board.score() + board.maxHeight()*10
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 51, 8.83, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 69, 8.25, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 34, 9.64, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 43, 20.54, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 51, 6.71, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 46, 24.21, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 50, 7.35, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 49, 3.32, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 36, 4.69, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 45, 10.58, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 39, 5.20, 100, <5: turns < 6 holes & >5: size 12, board.score() + board.maxHeight()*5
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 53, 6.63, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 54, 11.49, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 49, 17.44, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 43, 16.85, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 60, 6.40, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 37, 16.73, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 53, 18.63, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 51, 17.61, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 36, 12.25, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 49, 12.17, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 42, 11.14, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+
+//nu met bord 18 (leek niet echt uit te maken alleen vaker vastlopen maar dat tracken we nu niet goed nog dus doe toch maar 20 going forward)
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 50, 10.00, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 50, 13.19, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 40, 10.15, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 47, 14.46, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 58, 9.70, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 40, 16.06, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 51, 14.56, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 46, 13.49, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 33, 10.86, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 43, 7.62, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 44, 7.00, 100, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 5, 0, 61, 9.22, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 5, 0, 74, 8.49, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 5, 0, 65, 7.28, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 5, 0, 65, 22.80, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 5, 0, 62, 5.57, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 5, 0, 47, 14.56, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 5, 0, 67, 9.06, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 5, 0, 61, 10.30, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 5, 0, 38, 5.39, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 5, 0, 77, 10.77, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 5, 0, 45, 7.00, 1000, <5: turns < 6 holes & >5: size 12 & holes<20, board.score() + board.maxHeight()*5
 

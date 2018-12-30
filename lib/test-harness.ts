@@ -89,6 +89,7 @@ export function playStandardDecks(player: IPlayer, gamesPerDeck: number = 1): st
        const stat = playFixedDeck(player, sourceDeck, gamesPerDeck)
        allStats += stat;
        allStats += '\n';
+       
        console.log(`Deck ${i+1} finished (out of ${FIXED_DECKS.length} decks)`)
        i++;
     })
