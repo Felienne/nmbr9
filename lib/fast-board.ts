@@ -1,5 +1,5 @@
 import { Tile } from "./tile";
-import { Move, Point, Box, Orientation } from "./board";
+import { Move, Point, Box, Orientation, CandidateMove, isCandidateMove } from "./board";
 import { setFlagsFromString } from "v8";
 
 export const TILE_WIDTH = 5;
@@ -24,7 +24,7 @@ export const TILE_HEIGHT = 6;
  */
 export class FastBoard {
      /**
-     * Size of the field which can be played on 
+     * Size of the field which can be played on
      */
     public readonly size = 20
 
@@ -53,6 +53,8 @@ export class FastBoard {
 
     // bounding box limits the locations that we have to check
     private readonly boundingBox: Box;
+
+    private immutable: number = 0;
 
     constructor(source?: FastBoard) {
         this.heightMap = (source && source.heightMap.slice(0)) || new Uint8Array(this.size * this.size);
@@ -96,13 +98,20 @@ export class FastBoard {
     /**
      * return all moves: (position + orientations where the tile can be placed)
      */
-    public getLegalMoves(tile:Tile){
+    public getLegalMoves(tile:Tile): CandidateMove[] {
         const options = this.getAllMoves();
-        let locs = options.filter(p => this.canPlace(tile, p));
-        return locs;
+        let locs = options.map(p => this.determinePlacement(tile, p)).filter(x => x !== undefined);
+        return locs as any;
     }
 
-    public place(tile: Tile, place: Move) {
+    public playMove(move: CandidateMove): void {
+        this.place(move.tile, move);
+    }
+
+    public place(tile: Tile, place: Move): void {
+        if (this.immutable > 0) {
+            throw new Error('This board is immutable -- please make a copy');
+        }
         if (!this.canPlace(tile, place)) {
             throw new Error(`Can't place a ${tile.value} at (${place.x}, ${place.y})`);
         }
@@ -140,7 +149,17 @@ export class FastBoard {
         this.turnsPlayed += 1;
     }
 
+    /**
+     * Return true or false depending on whether the given move is legal
+     */
     public canPlace(tile: Tile, move: Move): boolean {
+        return this.determinePlacement(tile, move) !== undefined;
+    }
+
+    /**
+     * Return a CandidateMove if the tile can be placed, or undefined
+     */
+    public determinePlacement(tile: Tile, move: Move): CandidateMove | undefined {
         // NOTE: In order to be as speedy as possible, I've used
         // for loops instead of of .map(), .every(), .some().
         // IIRC V8 has trouble JITting those structures. I might
@@ -152,13 +171,13 @@ export class FastBoard {
 
         // If any of these are outside the board, they were dropped by positionsToIndexes.
         // If that happens we can't place here.
-        if (ones.length !== ixes.length) return false;
+        if (ones.length !== ixes.length) return undefined;
 
         // FLAT: all existing heights must have the same value
         const supportingLevel = this.heightMap[ixes[0]];
         for (const ix of ixes) {
             if (this.heightMap[ix] !== supportingLevel) {
-                return false;
+                return undefined;
             }
         }
 
@@ -173,7 +192,7 @@ export class FastBoard {
                     break;
                 }
             }
-            if (!other) { return false; }
+            if (!other) { return undefined; }
         }
 
         // TOUCHING: if we're not the first tile on the new level, we need to be touching
@@ -189,10 +208,10 @@ export class FastBoard {
                     break;
                 }
             }
-            if (!touching) return false;
+            if (!touching) return undefined;
         }
 
-        return true;
+        return { ...move, tile, targetLevel: supportingLevel + 1 };
     }
 
     public maxHeight() {
@@ -214,6 +233,39 @@ export class FastBoard {
     public tileValueAt(x: number, y: number): number {
         // Strip away the turn info and get the tile value
         return this.tileMap[y * this.size + x] % 10;
+    }
+
+    /**
+     * Makes the board immutable, return a function that undoes the function
+     */
+    public makeImmutable() {
+        this.immutable += 1;
+        return () => {
+            this.immutable -= 1;
+        };
+    }
+
+    /**
+     * Return a (subset) of the height map at a given location, for a width and
+     * height, at a given level
+     *
+     * Cells outside the bound of the board are always returned as 0.
+     *
+     * @returns An array of 0 and 1 of the size width*height.
+     */
+    public heightMapAtLevel(origin: Point, width: number, height: number, level: number): number[] {
+        const ret = new Array<number>();
+        for (let y = origin.y; y < origin.y + height; y++) {
+            for (let x = origin.x; x < origin.x + width; x++) {
+                if (y < 0 || y >= this.size || x < 0 || x >= this.size) {
+                    ret.push(0);
+                } else {
+                    ret.push(this.heightAt(x, y) >= level ? 1 : 0);
+                }
+            }
+        }
+
+        return ret;
     }
 
     /**
@@ -296,7 +348,7 @@ export class FastBoard {
 
         function isReachableFromEdge(p:Point):number{
             return Math.max(localHeightAt(p.x, p.y-1), localHeightAt(p.x, p.y+1), localHeightAt(p.x-1, p.y), localHeightAt(p.x+1, p.y))
-            
+
         }
 
         let madeChanges = true;

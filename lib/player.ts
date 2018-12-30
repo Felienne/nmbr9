@@ -22,4 +22,8 @@ export interface IPlayer {
      */
     printIterationsAndSelector() : string;
 
+    /**
+     * Called when the game is over
+     */
+    gameFinished(board: FastBoard): Promise<void>;
 }

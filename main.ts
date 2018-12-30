@@ -3,18 +3,13 @@ import { RandomPlayer } from "./lib/players/random-player";
 import { MonteCarloPlayer } from "./lib/players/monte-carlo-player";
 import { MonteCarloTreePlayer } from "./lib/players/monte-carlo-tree-hugger";
 import { FastBoard } from "./lib/fast-board";
+import { Tile } from "./lib/tile";
 
 
 function boardCalculator(board: FastBoard):number{
 
     return 50 + board.score()*2 - board.holesAt(0)*3; //reward for less holes
 }
-
-function selector(board: FastBoard):boolean{
-        const select = board.holesAt(0) < 20;
-        return select;
-    }
-
 
 
 const game = new Game([
@@ -23,14 +18,16 @@ const game = new Game([
         maxIterations: 10,
         printTreeStatistics: true,
         boardScoreCalculator: boardCalculator,
-        branchSelector: selector
-
     }),
 //    new MonteCarloPlayer(),
 ]);
 
-game.play();
+async function main() {
+    await game.play();
+    game.report();
+}
 
-game.report();
-
-
+main().catch(e => {
+    console.error(e);
+    process.exit(1);
+});

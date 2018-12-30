@@ -24,27 +24,31 @@ export const FIXED_DECKS = [
 /**
  * Play a given deck N times, return the mean score
  */
-export function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1): (undefined | number)[] {
+export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1): Promise<(undefined | number)[]> {
     let numberOfFails = 0;
-    return range(times).map(i => {
+    const ret = new Array<number | undefined>();
+
+    for (let i = 0; i < times; i++) {
         const deck = new Deck(sourceDeck);
         const board = new FastBoard();
 
         let tile = deck.drawTile();
         while (tile !== undefined) {
             const move = player.calculateMove(board, deck, tile);
-            if (move === undefined) { 
+            if (move === undefined) {
                 if (deck.remainingCards.length===0){
                     //if we have just 1 tile left, we could always place it at 0 and continue with just this score
                     //not a real big issue, just log and end game
-                    console.log("Failed game with 0 tiles remaining (counted as finished).") 
+                    console.log("Failed game with 0 tiles remaining (counted as finished).")
                     break;
                 }else{
                     console.log("Failed game with", deck.remainingCards.length, " tiles remaining. Score so far was:", board.score())
-                    return undefined; // End of game. FIXME: Should we score 0 to penalize harder?
+                    // End of game. FIXME: Should we score 0 to penalize harder?
+                    ret.push(undefined);
+                    continue;
                 }
 
-            } 
+            }
             board.place(tile, move);
 
             tile = deck.drawTile();
@@ -53,11 +57,15 @@ export function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1): (un
         console.log(`Deck played ${i+1} out of ${times} times`)
         console.log('Score: ', board.score());
         console.log('Holes: ', board.holesAt(0))
-        return board.score();
-    });
+        await player.gameFinished(board);
+
+        ret.push(board.score());
+    };
+
+    return ret;
 }
 
-export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1){
+export async function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1){
     function filterNotUndefined(y:(number|undefined)[]):number[]{
         const ret:number[] = [];
         y.forEach(x => {
@@ -68,7 +76,7 @@ export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1
         return ret;
     }
 
-    const scores_of_this_deck = runDeck(player, sourceDeck, times);
+    const scores_of_this_deck = await runDeck(player, sourceDeck, times);
     //const header =  'deck, #plays per deck, mean, stdev, iterations, selectorstring'
     const valid_scores = filterNotUndefined(scores_of_this_deck)
     //.filter(x => x !== undefined) does not make the typechecker happy :/
@@ -81,17 +89,18 @@ export function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1
 /**
  * Evaluate a player on a standardized set of decks and return all scores it got
  */
-export function playStandardDecks(player: IPlayer, gamesPerDeck: number = 1): string {
+export async function playStandardDecks(player: IPlayer, gamesPerDeck: number = 1): Promise<string> {
     let allStats = '';
     let i = 0;
-    
-    FIXED_DECKS.forEach(sourceDeck => {
-       const stat = playFixedDeck(player, sourceDeck, gamesPerDeck)
+
+    for (const sourceDeck of FIXED_DECKS) {
+       const stat = await playFixedDeck(player, sourceDeck, gamesPerDeck)
        allStats += stat;
        allStats += '\n';
        
        console.log(`Deck ${i+1} finished (out of ${FIXED_DECKS.length} decks)`)
        i++;
-    })
+    }
+
     return allStats;
 }

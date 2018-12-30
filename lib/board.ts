@@ -201,18 +201,29 @@ export class Board {
 
 }
 
-/**
- * A move is a location plus an orientation for the placement of a tile
- */
-export interface Move {
-    x: number;
-    y: number;
-    orientation: Orientation;
-}
-
 export interface Point {
     x: number;
     y: number;
+}
+
+/**
+ * A move is a location plus an orientation for the placement of a tile
+ */
+export interface Move extends Point {
+    orientation: Orientation;
+}
+
+/**
+ * An extension of Move that has information about the tile to be placed and
+ * the level the tile will be placed at.
+ */
+export interface CandidateMove extends Move {
+    tile: Tile;
+    targetLevel: number; // 1 == placed on floor
+}
+
+export function isCandidateMove(x: any): x is CandidateMove {
+    return x.x !== undefined && x.y !== undefined && x.orientation !== undefined && x.tile !== undefined && x.targetLevel !== undefined;
 }
 
 export interface Box {

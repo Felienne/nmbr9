@@ -18,7 +18,7 @@ export class Game {
     constructor(players: IPlayer[]) {
         this.deck = new Deck();
         this.players = players.map(player => ({
-            player,
+            logic: player,
             disqualified: false,
             board: new FastBoard(),
             timer: new Timer()
@@ -28,7 +28,7 @@ export class Game {
     /**
      * Play the whole game
      */
-    public play() {
+    public async play() {
         let drawnCard = this.deck.draw();
         while (drawnCard !== false) {
             const { turn, value }  = drawnCard;
@@ -48,10 +48,10 @@ export class Game {
                     const copiedDeck = new Deck(this.deck);
                     const copiedBoard = new FastBoard(player.board);
 
-                    const move = player.player.calculateMove(copiedBoard, copiedDeck, tile); 
+                    const move = player.logic.calculateMove(copiedBoard, copiedDeck, tile);
                     if (move !== undefined) {
                         player.board.place(tile, move);
-                        console.log(player.player.name, "plays", move, "(score so far:", player.board.score(), ")");
+                        console.log(player.logic.name, "plays", move, "(score so far:", player.board.score(), ")");
                     } else {
                         player.disqualified = true;
                         player.disqualificationReason = 'Player gave up';
@@ -67,11 +67,16 @@ export class Game {
 
             drawnCard = this.deck.draw();
         }
+
+        // Game done
+        for (const player of this.players) {
+            await player.logic.gameFinished(player.board);
+        }
     }
 
     public report() {
         for (const player of this.players) {
-            console.log(`PLAYER: ${player.player.name}`);
+            console.log(`PLAYER: ${player.logic.name}`);
             console.log('STATUS: ' + (player.disqualified ? `*disqualified* (${player.disqualificationReason})` : 'finished'));
             console.log(`SCORE:  ${player.board.score()}`);
             console.log(`SPEED:  ${player.timer.average.toFixed(3)}ms/turn`);
@@ -83,7 +88,7 @@ export class Game {
 }
 
 export interface PlayerState {
-    player: IPlayer;
+    logic: IPlayer;
 
     board: FastBoard;
 

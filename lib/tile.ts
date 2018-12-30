@@ -2,12 +2,12 @@ import { Orientation, Point } from "./board";
 
 const v = -1;
 
-export const TILE_WIDTH = 5;
+export const TILE_WIDTH = 6;
 export const TILE_HEIGHT = 6;
 
 //this cache is used for all getones calls, since they are expensive
-//this cache is an interesting js construct where arrays are used as keys haha not really they are 
-//coerced to strings 
+//this cache is an interesting js construct where arrays are used as keys haha not really they are
+//coerced to strings
 const getOnesCache:{[key:string]:Point[]} = {};
 
 
@@ -28,7 +28,7 @@ export class Tile {
 
 
     private getNumberLocations(num: number, d:Orientation){
-        const key = [this.value, num, d].toString(); 
+        const key = [this.value, num, d].toString();
 
         if (!(key in getOnesCache)) {
             const ret = [];
@@ -69,93 +69,93 @@ export function getTile(n:number): Tile {
 
     switch(n) {
         case 0: {
-            t.form = [[0,v,v,v,0],
-                      [v,1,1,1,v],
-                      [v,1,0,1,v],
-                      [v,1,0,1,v],
-                      [v,1,1,1,v],
-                      [0,v,v,v,0]];
+            t.form = [[0,v,v,v,0,0],
+                      [v,1,1,1,v,0],
+                      [v,1,0,1,v,0],
+                      [v,1,0,1,v,0],
+                      [v,1,1,1,v,0],
+                      [0,v,v,v,0,0]];
             break;
         }
         case 1: {
-            t.form = [[0,v,v,0,0],
-                      [v,1,1,v,0],
-                      [0,v,1,v,0],
-                      [0,v,1,v,0],
-                      [0,v,1,v,0],
-                      [0,0,v,0,0]];
+            t.form = [[0,v,v,0,0,0],
+                      [v,1,1,v,0,0],
+                      [0,v,1,v,0,0],
+                      [0,v,1,v,0,0],
+                      [0,v,1,v,0,0],
+                      [0,0,v,0,0,0]];
             break;
         }
         case 2: {
-            t.form = [[0,0,v,v,0],
-                      [0,v,1,1,v],
-                      [0,v,1,1,v],
-                      [v,1,1,v,0],
-                      [v,1,1,1,v],
-                      [0,v,v,v,0]];
+            t.form = [[0,0,v,v,0,0],
+                      [0,v,1,1,v,0],
+                      [0,v,1,1,v,0],
+                      [v,1,1,v,0,0],
+                      [v,1,1,1,v,0],
+                      [0,v,v,v,0,0]];
             break;
         }
         case 3: {
-            t.form = [[0,v,v,v,0],
-                      [v,1,1,1,v],
-                      [0,v,v,1,v],
-                      [0,v,1,1,v],
-                      [v,1,1,1,v],
-                      [0,v,v,v,0]];
+            t.form = [[0,v,v,v,0,0],
+                      [v,1,1,1,v,0],
+                      [0,v,v,1,v,0],
+                      [0,v,1,1,v,0],
+                      [v,1,1,1,v,0],
+                      [0,v,v,v,0,0]];
             break;
         }
         case 4: {
-            t.form = [[0,0,v,v,0],
-                      [0,v,1,1,v],
-                      [0,v,1,v,0],
-                      [v,1,1,1,v],
-                      [0,v,1,1,v],
-                      [0,0,v,v,0]];
+            t.form = [[0,0,v,v,0,0],
+                      [0,v,1,1,v,0],
+                      [0,v,1,v,0,0],
+                      [v,1,1,1,v,0],
+                      [0,v,1,1,v,0],
+                      [0,0,v,v,0,0]];
             break;
         }
         case 5: {
-            t.form = [[0,v,v,v,0],
-                      [v,1,1,1,v],
-                      [v,1,1,1,v],
-                      [0,v,v,1,v],
-                      [v,1,1,1,v],
-                      [0,v,v,v,0]];
+            t.form = [[0,v,v,v,0,0],
+                      [v,1,1,1,v,0],
+                      [v,1,1,1,v,0],
+                      [0,v,v,1,v,0],
+                      [v,1,1,1,v,0],
+                      [0,v,v,v,0,0]];
             break;
         }
         case 6: {
-            t.form = [[0,v,v,0,0],
-                      [v,1,1,v,0],
-                      [v,1,v,v,0],
-                      [v,1,1,1,v],
-                      [v,1,1,1,v],
-                      [0,v,v,v,0]];
+            t.form = [[0,v,v,0,0,0],
+                      [v,1,1,v,0,0],
+                      [v,1,v,v,0,0],
+                      [v,1,1,1,v,0],
+                      [v,1,1,1,v,0],
+                      [0,v,v,v,0,0]];
             break;
         }
         case 7: {
-            t.form = [[0,v,v,v,0],
-                      [v,1,1,1,v],
-                      [0,v,1,v,0],
-                      [v,1,1,v,0],
-                      [v,1,v,0,0],
-                      [0,v,0,0,0]];
+            t.form = [[0,v,v,v,0,0],
+                      [v,1,1,1,v,0],
+                      [0,v,1,v,0,0],
+                      [v,1,1,v,0,0],
+                      [v,1,v,0,0,0],
+                      [0,v,0,0,0,0]];
             break;
         }
         case 8: {
-            t.form = [[0,0,v,v,0],
-                      [0,v,1,1,v],
-                      [0,v,1,1,v],
-                      [v,1,1,v,0],
-                      [v,1,1,v,0],
-                      [0,v,v,0,0]];
+            t.form = [[0,0,v,v,0,0],
+                      [0,v,1,1,v,0],
+                      [0,v,1,1,v,0],
+                      [v,1,1,v,0,0],
+                      [v,1,1,v,0,0],
+                      [0,v,v,0,0,0]];
             break;
         }
         case 9: {
-            t.form = [[0,v,v,v,0],
-                      [v,1,1,1,v],
-                      [v,1,1,1,v],
-                      [v,1,1,v,0],
-                      [v,1,1,v,0],
-                      [0,v,v,0,0]];
+            t.form = [[0,v,v,v,0,0],
+                      [v,1,1,1,v,0],
+                      [v,1,1,1,v,0],
+                      [v,1,1,v,0,0],
+                      [v,1,1,v,0,0],
+                      [0,v,v,0,0,0]];
             break;
         }
     }

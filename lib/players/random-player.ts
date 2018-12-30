@@ -27,4 +27,7 @@ export class RandomPlayer implements IPlayer {
     public printIterationsAndSelector(){
         return 'determined by a fair dice roll';
     }
+
+    public async gameFinished(board: FastBoard): Promise<void> {
+    }
 }

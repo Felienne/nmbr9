@@ -1,4 +1,4 @@
-import { Move } from '../board';
+import { Move, CandidateMove } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
 import { pick, pickAndRemove, mean, sum } from '../util';
@@ -26,7 +26,7 @@ class Tree{
     public totalScore: number;
     public timesVisited: number;
 
-    private branchSelector?: BoardFunction<boolean>;
+    private branchSelector?: BranchSelectorFn;
     private boardScoreCalculator?: BoardFunction<number>;
     private possibleMoveCount: number;
 
@@ -38,7 +38,7 @@ class Tree{
             board: FastBoard,
             tile:Tile | undefined,
             deck: Deck,
-            branchSelector?: BoardFunction<boolean>,
+            branchSelector?: BranchSelectorFn,
             boardScoreCalculator?: BoardFunction<number>) {
         this.board = board;
         this.tile = tile;
@@ -49,7 +49,7 @@ class Tree{
         this.boardScoreCalculator = boardScoreCalculator;
 
         if (tile) {
-            this.unexploredMoves = filterAcceptableMoves(board, tile, board.getLegalMoves(tile), deck, branchSelector);
+            this.unexploredMoves = filterAcceptableMoves(board, board.getLegalMoves(tile), deck, branchSelector);
         } else {
             this.unexploredMoves = [];
         }
@@ -123,7 +123,7 @@ class Tree{
         let tile = this.tile;
         while (tile !== undefined) {
             // Random move met tile
-            const moves = filterAcceptableMoves(playoutBoard, tile, playoutBoard.getLegalMoves(tile), playoutDeck, this.branchSelector);
+            const moves = filterAcceptableMoves(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck, this.branchSelector);
             const move = pick(moves);
 
             if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
@@ -171,16 +171,22 @@ class Tree{
     }
 }
 
-function filterAcceptableMoves(startingBoard: FastBoard, tile: Tile, moves: Move[], remainingDeck: Deck, branchSelector?: BoardFunction<boolean>) {
+function filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck, branchSelector?: BranchSelectorFn) {
     if (!branchSelector) {
         return moves;
     }
 
-    return moves.filter(move => {
-        const boardCopy = new FastBoard(startingBoard);
-        boardCopy.place(tile, move);
-        return branchSelector(boardCopy);
-    });
+    const makeMutable = startingBoard.makeImmutable();
+    try {
+        const acceptableMoves = moves.filter(move => branchSelector(startingBoard, move));
+        if (acceptableMoves.length === 0) {
+            console.log('Rejected all moves');
+            return [moves[0]];
+        }
+        return acceptableMoves;
+    } finally {
+        makeMutable();
+    }
 }
 
 export type BoardFunction<T> = (board: FastBoard) => T;
@@ -213,7 +219,7 @@ export interface MonteCarloOptions {
      *
      * If not supplied, all branches will be explored.
      */
-    branchSelector?: BoardFunction<boolean>;
+    branchSelector?: BranchSelectorFn;
     branchSelectorString?: string;
 
     /**
@@ -223,13 +229,15 @@ export interface MonteCarloOptions {
     boardScoreCalculatorString?: string;
 }
 
+export type BranchSelectorFn = (board: FastBoard, move: CandidateMove) => boolean;
+
 /**
  * This player executes MC tree search
  */
 export class MonteCarloTreePlayer implements IPlayer {
     public readonly name: string = 'Willow McTreeFace';
 
-    constructor(private readonly options: MonteCarloOptions) {
+    constructor(protected readonly options: MonteCarloOptions) {
         if (options.maxIterations === undefined && options.maxThinkingTimeSec === undefined) {
             throw new Error('Supply at least maxIterations or maxThinkingTimeSec');
         }
@@ -244,6 +252,7 @@ export class MonteCarloTreePlayer implements IPlayer {
         let i = 0;
         while ((maxIterations === undefined || i < maxIterations)
                 && (deadline === undefined || Date.now() <= deadline)) {
+            console.log('Thinking...');
             root.explore();
             i += 1;
         }
@@ -259,7 +268,8 @@ export class MonteCarloTreePlayer implements IPlayer {
         return `${this.options.maxIterations}, ${this.options.branchSelectorString}, ${this.options.boardScoreCalculatorString}`;
     }
 
-
+    public async gameFinished(board: FastBoard): Promise<void> {
+    }
 
     private printTreeStatistics(root: Tree) {
         const stats: TreeStats = {

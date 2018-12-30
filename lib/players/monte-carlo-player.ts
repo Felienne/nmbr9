@@ -67,4 +67,7 @@ export class MonteCarloPlayer implements IPlayer {
         }
         return maxScore;
     }
+
+    public async gameFinished(board: FastBoard): Promise<void> {
+    }
 }
