@@ -73,9 +73,9 @@ export class NumberZero extends MonteCarloTreePlayer {
 
         // Clean that shit up
         tf.dispose(decisionsTensor);
-        tf.dispose(this.trainingSamples);
-        this.trainingSamples.slice();
-        this.decisions.slice();
+        tf.dispose(this.trainingSamples);       
+        this.trainingSamples.splice(0); // clear
+        this.decisions.splice(0); // clear
     }
 
     private branchSelector(board: FastBoard, move: CandidateMove): boolean {
