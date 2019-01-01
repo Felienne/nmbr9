@@ -26,8 +26,7 @@ class Tree{
     public totalScore: number;
     public timesVisited: number;
 
-    private branchSelector?: BranchSelectorFn;
-    private boardScoreCalculator?: BoardFunction<number>;
+    private player: MonteCarloTreePlayer;
     private possibleMoveCount: number;
 
     public get meanScore(): number{
@@ -38,18 +37,16 @@ class Tree{
             board: FastBoard,
             tile:Tile | undefined,
             deck: Deck,
-            branchSelector?: BranchSelectorFn,
-            boardScoreCalculator?: BoardFunction<number>) {
+            player: MonteCarloTreePlayer) {
         this.board = board;
         this.tile = tile;
         this.deck =  deck;
         this.totalScore = 0;
         this.timesVisited = 0;
-        this.branchSelector = branchSelector;
-        this.boardScoreCalculator = boardScoreCalculator;
+        this.player = player;
 
         if (tile) {
-            this.unexploredMoves = filterAcceptableMoves(board, board.getLegalMoves(tile), deck, branchSelector);
+            this.unexploredMoves = this.filterAcceptableMoves(board, board.getLegalMoves(tile), deck);
         } else {
             this.unexploredMoves = [];
         }
@@ -79,7 +76,7 @@ class Tree{
     public explore(): PlayoutResult {
         if (this.possibleMoveCount === 0) {
             // This is a leaf node or all possible moves got pruned. Just return the current score.
-            return { score: this.scoreForBoard(this.board) };
+            return { score: this.player.scoreForBoard(this.board) };
         }
 
         let result;
@@ -95,7 +92,7 @@ class Tree{
             const deckAfterMove = new Deck(this.deck);
             const nextTile = deckAfterMove.drawTile();
 
-            const freshChild = new Tree(boardAfterMove, nextTile, deckAfterMove, this.branchSelector, this.boardScoreCalculator);
+            const freshChild = new Tree(boardAfterMove, nextTile, deckAfterMove, this.player);
             this.children.set(toExplore, freshChild);
 
             result = freshChild.randomPlayout();
@@ -106,7 +103,7 @@ class Tree{
                 // board is filled up to the brim. We score what's currently
                 // on the board.
                 // FIXME: Should we score 0 to penalize harder?
-                return { score: this.scoreForBoard(this.board) };
+                return { score: this.player.scoreForBoard(this.board) };
             }
             result = bestChild.explore();
         }
@@ -123,7 +120,7 @@ class Tree{
         let tile = this.tile;
         while (tile !== undefined) {
             // Random move met tile
-            const moves = filterAcceptableMoves(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck, this.branchSelector);
+            const moves = this.filterAcceptableMoves(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck);
             const move = pick(moves);
 
             if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
@@ -132,24 +129,9 @@ class Tree{
             tile = playoutDeck.drawTile();
         }
 
-        this.totalScore += this.scoreForBoard(playoutBoard);
+        this.totalScore += this.player.scoreForBoard(playoutBoard);
         this.timesVisited += 1;
-        return { score: this.scoreForBoard(playoutBoard) };
-    }
-
-    private scoreForBoard(board: FastBoard):number {
-        if (this.boardScoreCalculator) {
-            return Math.max(0, this.boardScoreCalculator(board));
-        }
-        let score = board.score();
-        if (score !== undefined){
-            return score;
-        }
-        else
-        {
-            return 0;
-        }
-
+        return { score: this.player.scoreForBoard(playoutBoard) };
     }
 
     private mostPromisingChild(totalGamesPlayed: number): Tree | undefined {
@@ -169,25 +151,22 @@ class Tree{
         const explorationFactor = 100; // Magic twiddle factor
         return this.meanScore + explorationFactor * Math.sqrt(Math.log(totalGamesPlayed) / this.timesVisited);
     }
-}
 
-function filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck, branchSelector?: BranchSelectorFn) {
-    if (!branchSelector) {
-        return moves;
-    }
-
-    const makeMutable = startingBoard.makeImmutable();
-    try {
-        const acceptableMoves = branchSelector(startingBoard, moves);
-        if (acceptableMoves.length === 0) {
-            console.log('Rejected all moves');
-            return [moves[0]];
+    private filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck) {
+        const makeMutable = startingBoard.makeImmutable();
+        try {
+            const acceptableMoves = this.player.selectBranches(startingBoard, moves);
+            if (acceptableMoves.length === 0) {
+                console.log('Rejected all moves');
+                return [moves[0]];
+            }
+            return acceptableMoves;
+        } finally {
+            makeMutable();
         }
-        return acceptableMoves;
-    } finally {
-        makeMutable();
     }
 }
+
 
 export type BoardFunction<T> = (board: FastBoard) => T;
 
@@ -247,7 +226,7 @@ export class MonteCarloTreePlayer implements IPlayer {
         const deadline = this.options.maxThinkingTimeSec !== undefined ? Date.now() + this.options.maxThinkingTimeSec * 1000 : undefined;
         const maxIterations = this.options.maxIterations;
 
-        const root = new Tree(board, tile, deck, this.options.branchSelector, this.options.boardScoreCalculator);
+        const root = new Tree(board, tile, deck, this);
 
         let i = 0;
         while ((maxIterations === undefined || i < maxIterations)
@@ -269,6 +248,20 @@ export class MonteCarloTreePlayer implements IPlayer {
     }
 
     public async gameFinished(board: FastBoard): Promise<void> {
+    }
+
+    /**
+     * Called by the Tree Search to prune the game tree
+     */
+    public selectBranches(board: FastBoard, moves: CandidateMove[]): CandidateMove[] {
+        return this.options.branchSelector ? this.options.branchSelector(board, moves) : moves;
+    }
+
+    public scoreForBoard(board: FastBoard) {
+        if (this.options.boardScoreCalculator) {
+            return Math.max(0, this.options.boardScoreCalculator(board));
+        }
+        return board.score();
     }
 
     private printTreeStatistics(root: Tree) {

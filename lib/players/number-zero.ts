@@ -25,6 +25,8 @@ export interface NumberZeroOptions {
 }
 
 export class NumberZero extends MonteCarloTreePlayer {
+    public readonly name: string = 'Number Zero';
+
     private model: tf.Model;
 
     // These fields will be used to keep track of what decisions we made
@@ -37,8 +39,6 @@ export class NumberZero extends MonteCarloTreePlayer {
 
     constructor(options: NumberZeroOptions) {
         super(options);
-
-        this.options.branchSelector = this.branchSelector.bind(this);
 
         this.model = tf.sequential({
             layers: [
@@ -73,34 +73,36 @@ export class NumberZero extends MonteCarloTreePlayer {
 
         // Clean that shit up
         tf.dispose(decisionsTensor);
-        tf.dispose(this.trainingSamples);       
+        tf.dispose(this.trainingSamples);
         this.trainingSamples.splice(0); // clear
         this.decisions.splice(0); // clear
     }
 
-    private branchSelector(board: FastBoard, move: CandidateMove): boolean {
+    public selectBranches(board: FastBoard, moves: CandidateMove[]): CandidateMove[] {
         const self = this;
 
-        // Get the height map at the given position and level.
-        return tf.tidy(function() {
-            const localArea = tf.tensor1d(board.heightMapAtLevel(move, TILE_WIDTH, TILE_HEIGHT, move.targetLevel));
-            const tileNr = tf.oneHot([move.tile.value], 10).reshape([-1]).toFloat();
-            const orientation = tf.oneHot([move.orientation - 1], 4).reshape([-1]).toFloat(); // ???
+        return moves.filter(move => {
+            // Get the height map at the given position and level.
+            return tf.tidy(function() {
+                const localArea = tf.tensor1d(board.heightMapAtLevel(move, TILE_WIDTH, TILE_HEIGHT, move.targetLevel));
+                const tileNr = tf.oneHot([move.tile.value], 10).reshape([-1]).toFloat();
+                const orientation = tf.oneHot([move.orientation - 1], 4).reshape([-1]).toFloat(); // ???
 
-            // Will not be disposed!
-            const inputTensor = tf.keep(tf.concat([localArea, tileNr, orientation]));
+                // Will not be disposed!
+                const inputTensor = tf.keep(tf.concat([localArea, tileNr, orientation]));
 
-            const prediction = self.model.predict(inputTensor.reshape([1, -1]));
-            if (Array.isArray(prediction)) throw new Error('nuh-uh'); //Make type checker happy
+                const prediction = self.model.predict(inputTensor.reshape([1, -1]));
+                if (Array.isArray(prediction)) throw new Error('nuh-uh'); //Make type checker happy
 
-            const predictedValue = prediction.get(0, 0);
+                const predictedValue = prediction.get(0, 0);
 
-            // Remember decisions for training later (in gameFinished)
-            const decision = predictedValue > 0;
-            self.trainingSamples.push(inputTensor);
-            self.decisions.push(decision ? 1 : -1);
+                // Remember decisions for training later (in gameFinished)
+                const decision = predictedValue > 0;
+                self.trainingSamples.push(inputTensor);
+                self.decisions.push(decision ? 1 : -1);
 
-            return decision;
+                return decision;
+            });
         });
     }
 }
