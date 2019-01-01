@@ -84,7 +84,7 @@ export class NumberZero extends MonteCarloTreePlayer {
         return moves.filter(move => {
             // Get the height map at the given position and level.
             return tf.tidy(function() {
-                const localArea = tf.tensor1d(board.heightMapAtLevel(move, TILE_WIDTH, TILE_HEIGHT, move.targetLevel));
+                const localArea = tf.tensor1d(board.heightMapAtLevel(move, TILE_WIDTH, TILE_HEIGHT, move.targetLevel).data);
                 const tileNr = tf.oneHot([move.tile.value], 10).reshape([-1]).toFloat();
                 const orientation = tf.oneHot([move.orientation - 1], 4).reshape([-1]).toFloat(); // ???
 

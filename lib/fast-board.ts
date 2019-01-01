@@ -1,6 +1,7 @@
 import { Tile } from "./tile";
 import { Move, Point, Box, Orientation, CandidateMove, isCandidateMove } from "./board";
 import { setFlagsFromString } from "v8";
+import { Field } from "./field";
 
 export const TILE_WIDTH = 5;
 export const TILE_HEIGHT = 6;
@@ -31,12 +32,12 @@ export class FastBoard {
     /**
      * Memory for the height map
      */
-    private readonly heightMap: Uint8Array;
+    private readonly heightMap: Field;
 
     /**
      * Memory for the tile data
      */
-    private readonly tileMap: Uint8Array;
+    private readonly tileMap: Field;
 
     /**
      * Running maximum of height on the board
@@ -57,8 +58,8 @@ export class FastBoard {
     private immutable: number = 0;
 
     constructor(source?: FastBoard) {
-        this.heightMap = (source && source.heightMap.slice(0)) || new Uint8Array(this.size * this.size);
-        this.tileMap = (source && source.tileMap.slice(0)) || new Uint8Array(this.size * this.size);
+        this.heightMap = (source && source.heightMap.clone()) || Field.zero(this.size, this.size);
+        this.tileMap = (source && source.tileMap.clone()) || Field.zero(this.size, this.size);
         this._maxHeight = source ? source._maxHeight : 0;
         this._score = source ? source._score : 0;
         this.turnsPlayed = source ? source.turnsPlayed : 0;
@@ -122,17 +123,17 @@ export class FastBoard {
 
         const ixes = this.positionsToIndexes(tile.getOnes(place.orientation), place);
         for (const i of ixes) {
-            const newLevel = this.heightMap[i] + 1;
+            const newLevel = this.heightMap.data[i] + 1;
             if (newLevel > this._maxHeight) {
                 this._maxHeight = newLevel;
             }
-            this.heightMap[i] = newLevel;
+            this.heightMap.data[i] = newLevel;
 
             // Encode both turn and value in the same byte
-            this.tileMap[i] = tile.turn * 10 + tile.value;
+            this.tileMap.data[i] = tile.turn * 10 + tile.value;
         }
 
-        const level = this.heightMap[ixes[0]];
+        const level = this.heightMap.data[ixes[0]];
         this._score += (level - 1) * tile.value;
 
         // Make a point relative to move absolute on the board
@@ -174,9 +175,9 @@ export class FastBoard {
         if (ones.length !== ixes.length) return undefined;
 
         // FLAT: all existing heights must have the same value
-        const supportingLevel = this.heightMap[ixes[0]];
+        const supportingLevel = this.heightMap.data[ixes[0]];
         for (const ix of ixes) {
-            if (this.heightMap[ix] !== supportingLevel) {
+            if (this.heightMap.data[ix] !== supportingLevel) {
                 return undefined;
             }
         }
@@ -184,10 +185,10 @@ export class FastBoard {
         // ON TWO TILES: if we're at a level higher than 0, we need to be touching at least
         // two instances.
         if (supportingLevel > 0) {
-            const someTile = this.tileMap[ixes[0]];
+            const someTile = this.tileMap.data[ixes[0]];
             let other = false;
             for (const ix of ixes) {
-                if (this.tileMap[ix] !== someTile) {
+                if (this.tileMap.data[ix] !== someTile) {
                     other = true;
                     break;
                 }
@@ -203,7 +204,7 @@ export class FastBoard {
             let touching = false;
             const vixes = this.positionsToIndexes(tile.getAdjacencies(move.orientation), move);
             for (const ix of vixes) {
-                if (this.heightMap[ix] >= tileLevel) {
+                if (this.heightMap.data[ix] >= tileLevel) {
                     touching = true;
                     break;
                 }
@@ -227,12 +228,12 @@ export class FastBoard {
     }
 
     public heightAt(x: number, y: number): number {
-        return this.heightMap[y * this.size + x];
+        return this.heightMap.at(x, y);
     }
 
     public tileValueAt(x: number, y: number): number {
         // Strip away the turn info and get the tile value
-        return this.tileMap[y * this.size + x] % 10;
+        return this.tileMap.at(x, y) % 10;
     }
 
     /**
@@ -253,14 +254,15 @@ export class FastBoard {
      *
      * @returns An array of 0 and 1 of the size width*height.
      */
-    public heightMapAtLevel(origin: Point, width: number, height: number, level: number): number[] {
-        const ret = new Array<number>();
+    public heightMapAtLevel(origin: Point, width: number, height: number, level: number): Field {
+        const ret = Field.zero(width, height);
+
         for (let y = origin.y; y < origin.y + height; y++) {
             for (let x = origin.x; x < origin.x + width; x++) {
                 if (y < 0 || y >= this.size || x < 0 || x >= this.size) {
-                    ret.push(0);
+                    // Already at 0
                 } else {
-                    ret.push(this.heightAt(x, y) >= level ? 1 : 0);
+                    ret.set(x, y, this.heightMap.at(x, y) >= level ? 1 : 0);
                 }
             }
         }
@@ -305,26 +307,15 @@ export class FastBoard {
     }
 
     public holesAt(level:number):number{
-        const gatenMap = new Uint8Array(this.heightMap.length);
-
-        const size = this.size;
-
-        function localHeightAt(x: number, y: number): number {
-            return gatenMap[y * size + x];
-        }
-
-        function setAt(x: number, y: number, value:number){
-            gatenMap[y * size + x] = value;
-        }
-
+        const gatenMap = Field.zero(this.size, this.size);
         const holesToCheck = new Array<Point>();
 
         const self = this;
         function isSleuf(p:Point):boolean{
-            if (p.y !== self.boundingBox.topLeft.y && p.y != self.boundingBox.botRight.y && self.heightAt(p.x, p.y-1) > 0 && self.heightAt(p.x, p.y+1) > 0){
+            if (p.y !== self.boundingBox.topLeft.y && p.y != self.boundingBox.botRight.y && self.heightMap.at(p.x, p.y-1) > 0 && self.heightMap.at(p.x, p.y+1) > 0){
                 return true;
             }
-            if (p.x !== self.boundingBox.topLeft.x && p.x != self.boundingBox.botRight.x && self.heightAt(p.x-1, p.y) > 0 && self.heightAt(p.x+1, p.y) > 0){
+            if (p.x !== self.boundingBox.topLeft.x && p.x != self.boundingBox.botRight.x && self.heightMap.at(p.x-1, p.y) > 0 && self.heightMap.at(p.x+1, p.y) > 0){
                 return true;
             }
             return false;
@@ -332,11 +323,11 @@ export class FastBoard {
 
         for (let x = this.boundingBox.topLeft.x; x <= this.boundingBox.botRight.x; x++) {
             for (let y = this.boundingBox.topLeft.y; y <= this.boundingBox.botRight.y; y++) {
-                if (this.heightAt(x, y) === 0) {                // Hole?
+                if (this.heightMap.at(x, y) === 0) {                // Hole?
                     if (x === this.boundingBox.topLeft.x || x === this.boundingBox.botRight.x
                         || y === this.boundingBox.topLeft.y || y === this.boundingBox.botRight.y)  // At edge?
                     {
-                        setAt(x, y, isSleuf({x,y})? 2 : 1);
+                        gatenMap.set(x, y, isSleuf({x,y})? 2 : 1);
                     } else {
                         holesToCheck.push({ x, y });
                     }
@@ -347,7 +338,7 @@ export class FastBoard {
 
 
         function isReachableFromEdge(p:Point):number{
-            return Math.max(localHeightAt(p.x, p.y-1), localHeightAt(p.x, p.y+1), localHeightAt(p.x-1, p.y), localHeightAt(p.x+1, p.y))
+            return Math.max(gatenMap.at(p.x, p.y-1), gatenMap.at(p.x, p.y+1), gatenMap.at(p.x-1, p.y), gatenMap.at(p.x+1, p.y))
 
         }
 
@@ -361,7 +352,7 @@ export class FastBoard {
                 const isEdge = isReachableFromEdge(holeToCheck)
 
                 if (isEdge) {
-                    setAt(holeToCheck.x, holeToCheck.y, Math.max(isSleuf(holeToCheck)?2:1,isEdge));
+                    gatenMap.set(holeToCheck.x, holeToCheck.y, Math.max(isSleuf(holeToCheck)?2:1,isEdge));
                     holesToCheck.splice(i, 1);
                     madeChanges = true;
                 } else {
@@ -370,6 +361,6 @@ export class FastBoard {
             }
         }
 
-        return holesToCheck.length + gatenMap.filter(x => x >= 2).length;
+        return holesToCheck.length + gatenMap.data.filter(x => x >= 2).length;
     }
 }
