@@ -178,7 +178,7 @@ function filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[],
 
     const makeMutable = startingBoard.makeImmutable();
     try {
-        const acceptableMoves = moves.filter(move => branchSelector(startingBoard, move));
+        const acceptableMoves = branchSelector(startingBoard, moves);
         if (acceptableMoves.length === 0) {
             console.log('Rejected all moves');
             return [moves[0]];
@@ -229,7 +229,7 @@ export interface MonteCarloOptions {
     boardScoreCalculatorString?: string;
 }
 
-export type BranchSelectorFn = (board: FastBoard, move: CandidateMove) => boolean;
+export type BranchSelectorFn = (board: FastBoard, moves: CandidateMove[]) => CandidateMove[];
 
 /**
  * This player executes MC tree search
