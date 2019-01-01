@@ -3,7 +3,7 @@ import { Deck } from "./cards";
 import { Board } from "./board";
 import { getTile } from "./tile";
 import { Timer } from "./util";
-import { displayBoard } from "./display";
+import { displayBoard, displayMove } from "./display";
 import { FastBoard } from "./fast-board";
 
 /**
@@ -51,7 +51,7 @@ export class Game {
                     const move = player.logic.calculateMove(copiedBoard, copiedDeck, tile);
                     if (move !== undefined) {
                         player.board.place(tile, move);
-                        console.log(player.logic.name, "plays", move, "(score so far:", player.board.score(), ")");
+                        console.log(player.logic.name, "plays", displayMove(move), "(score so far:", player.board.score(), ")");
                     } else {
                         player.disqualified = true;
                         player.disqualificationReason = 'Player gave up';

@@ -1,5 +1,8 @@
 const chalk = require('chalk');
 import { range } from "./util";
+import { Move, Orientation } from "./board";
+import util = require('util');
+import { zip } from "@tensorflow/tfjs-data";
 
 /**
  * Return a nice colorized stringification of the board
@@ -23,6 +26,16 @@ export function displayBoard(board: IBoard) {
 
     lines.push(board.printExtraInfo());;
     return lines.join('\n') + '\n';
+}
+
+export function displayMove(move: Move) {
+    const ori = {
+        [Orientation.Up]: '△',
+        [Orientation.Down]: '▽',
+        [Orientation.Left]: '◁',
+        [Orientation.Right]: '▷',
+    };
+    return util.format('(%s, %s, %s)', move.x, move.y, ori[move.orientation])
 }
 
 interface IBoard {
