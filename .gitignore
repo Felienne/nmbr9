@@ -2,3 +2,5 @@
 node_modules
 .DS_Store
 !jest.config.js
+numberzero.model
+.vscode

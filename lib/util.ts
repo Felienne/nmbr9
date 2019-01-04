@@ -81,7 +81,7 @@ export function sum(xs: number[]): number {
 
 export function mean(xs: number[]): number {
     const total = xs.reduce((a, b) => a + b, 0);
-    return Math.round(total / xs.length);
+    return xs.length > 0 ? Math.round(total / xs.length) : 0;
 }
 
 export function standardDeviation(values: number[]){

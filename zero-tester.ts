@@ -3,8 +3,10 @@ import { playStandardDecks } from "./lib/test-harness";
 
 async function main() {
     const player = new NumberZero({
-        maxIterations: 100
+        maxIterations: 10
     });
+
+    await player.initialize();
 
     while (true) {
         const plays_per_deck = 5;
