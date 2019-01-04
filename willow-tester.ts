@@ -58,7 +58,7 @@ function boardCalculator(board: FastBoard):number{
 async function main() {
     const player = new MonteCarloTreePlayer({
         // Iterations so we don't depend on CPU speed for results
-        maxIterations: 10000,
+        maxIterations: 1,
         printTreeStatistics: true,
         boardScoreCalculator: boardCalculator,
         branchSelectorString: 'min holes and min boundingbox + 5',
@@ -72,8 +72,6 @@ async function main() {
     //const stats = await playFixedDeck(player, FIXED_DECKS[deck_number], plays_per_deck);
 
     console.log(stats);
-
-    await appendFile('willow-stats.txt', stats + '\n');
 }
 
 main().catch(e => {

@@ -369,3 +369,15 @@ deck, #plays per deck, failed games, mean, stdev, iterations, selectorstring, bo
 [3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 3, 0, 90, 2.83, 10000, min holes and min boundingbox + 5, board.score*2 + maxheight*2
 [0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 3, 0, 81, 0.00, 10000, min holes and min boundingbox + 5, board.score*2 + maxheight*2
 //not finished (decks 9-11 still to be played)
+
+[2,7,1,3,2,9,1,3,4,6,9,0,0,8,5,4,8,5,6,7], 3, 0, 38, 9.85, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[6,1,7,2,9,8,1,3,0,0,8,5,4,3,4,7,5,6,2,9], 3, 0, 40, 3.74, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[1,1,9,3,2,4,2,3,0,4,7,6,8,7,6,8,5,0,5,9], 3, 0, 38, 6.24, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[8,6,4,9,5,2,7,0,0,4,3,8,9,1,3,1,2,6,7,5], 3, 0, 26, 3.74, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[1,1,4,5,5,4,3,7,6,2,9,8,8,6,2,0,0,7,3,9], 3, 0, 43, 2.65, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[9,7,6,3,6,0,1,3,0,9,7,4,5,4,8,2,8,1,2,5], 3, 0, 34, 9.49, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[3,1,2,8,9,5,4,8,0,5,6,3,7,2,4,0,1,6,9,7], 3, 0, 36, 18.11, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[0,6,3,5,2,6,8,7,3,8,7,1,5,9,9,4,2,0,1,4], 3, 0, 39, 13.08, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[9,3,4,0,5,2,6,6,0,7,3,2,8,8,7,1,4,5,9,1], 3, 0, 21, 9.27, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[9,6,4,4,5,7,3,7,3,0,2,1,6,8,1,8,9,5,0,2], 3, 0, 43, 1.00, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
+[0,5,3,0,1,8,2,1,5,8,6,9,7,9,2,4,3,4,6,7], 3, 0, 32, 7.81, 1, min holes and min boundingbox + 5, board.score*2 + maxheight*2
