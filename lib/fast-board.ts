@@ -303,7 +303,7 @@ export class FastBoard {
     }
 
     public printExtraInfo(): string {
-        return `Holes: ${this.holesAt(0)}`;
+        return `Holes: ${this.holesAt(1)}`;
     }
 
     public holesAt(level:number):number{
@@ -312,10 +312,10 @@ export class FastBoard {
 
         const self = this;
         function isSleuf(p:Point):boolean{
-            if (p.y !== self.boundingBox.topLeft.y && p.y != self.boundingBox.botRight.y && self.heightMap.at(p.x, p.y-1) > 0 && self.heightMap.at(p.x, p.y+1) > 0){
+            if (p.y !== self.boundingBox.topLeft.y && p.y != self.boundingBox.botRight.y && self.heightMap.at(p.x, p.y-1) >= level && self.heightMap.at(p.x, p.y+1) >= level){
                 return true;
             }
-            if (p.x !== self.boundingBox.topLeft.x && p.x != self.boundingBox.botRight.x && self.heightMap.at(p.x-1, p.y) > 0 && self.heightMap.at(p.x+1, p.y) > 0){
+            if (p.x !== self.boundingBox.topLeft.x && p.x != self.boundingBox.botRight.x && self.heightMap.at(p.x-1, p.y) >= level && self.heightMap.at(p.x+1, p.y) >= level){
                 return true;
             }
             return false;
@@ -323,7 +323,7 @@ export class FastBoard {
 
         for (let x = this.boundingBox.topLeft.x; x <= this.boundingBox.botRight.x; x++) {
             for (let y = this.boundingBox.topLeft.y; y <= this.boundingBox.botRight.y; y++) {
-                if (this.heightMap.at(x, y) === 0) {                // Hole?
+                if (this.heightMap.at(x, y) < level) {                // Hole?
                     if (x === this.boundingBox.topLeft.x || x === this.boundingBox.botRight.x
                         || y === this.boundingBox.topLeft.y || y === this.boundingBox.botRight.y)  // At edge?
                     {

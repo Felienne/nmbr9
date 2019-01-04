@@ -13,51 +13,65 @@ const appendFile = util.promisify(fs.appendFile);
 
 // Standardized test bench for the Willow player
 
-function boardCalculator(board: FastBoard):number{
-    return board.score();
-}
-
 function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMove[]{
-    const ret = moves.filter(move => {
-    
+    //new selection strategy, see how many holes are possible and select smallest options
+
+    function numberOfHolesForThisMove(move:CandidateMove){
         const board = new FastBoard(startingBoard);
-    
         board.playMove(move);
-    
-        const maxSize = 12;
-        const sizeOK = board.widthOfBoudingBox() < maxSize && board.heightOfBoundingBox() < maxSize;
-    
-        if (board.turnsPlayed < 5){
-            return board.holesAt(0) <= 6 ;
-        }
-        else{
-            return board.holesAt(0) <= 20 && sizeOK;
-        }
+        return board.holesAt(1);
+    }
+
+    function boundingBoxForThisMove(move:CandidateMove){
+        const board = new FastBoard(startingBoard);
+        board.playMove(move);
+        return board.sizeOfBoundingBox();
+    }
+
+
+
+    const allHoles = moves.map(numberOfHolesForThisMove);
+    const minNumberofHoles = Math.min(...allHoles)
+
+    const ret = moves.filter((move,i) => { 
+        return allHoles[i] <= minNumberofHoles
     })
 
-    return ret;
+    const allBoundingBoxes = ret.map(boundingBoxForThisMove);
+    const minBoundingBox = Math.min(...allBoundingBoxes)
+    const meanBoundingBox = mean(allBoundingBoxes)
 
+    const ret2 = ret.filter((move,i) => { 
+        return allBoundingBoxes[i] <= minBoundingBox + 5
+    })
+
+    return ret2;
+
+}
+
+
+function boardCalculator(board: FastBoard):number{
+
+    return board.score()*2 + board.maxHeight()*2;
 }
 
 async function main() {
     const player = new MonteCarloTreePlayer({
         // Iterations so we don't depend on CPU speed for results
-        maxIterations: 100,
+        maxIterations: 1,
         printTreeStatistics: true,
         boardScoreCalculator: boardCalculator,
-        branchSelectorString: '>5 turns width and height < 12',
-        boardScoreCalculatorString: 'board.score()',
+        branchSelectorString: 'min holes and min boundingbox + 5',
+        boardScoreCalculatorString: 'board.score*2 + maxheight*2',
         branchSelector: selector
     });
 
-    const plays_per_deck = 5;
+    const plays_per_deck = 3;
     const deck_number = 5;
     const stats = await playStandardDecks(player, plays_per_deck);
     //const stats = await playFixedDeck(player, FIXED_DECKS[deck_number], plays_per_deck);
 
     console.log(stats);
-
-    await appendFile('willow-stats.txt', stats + '\n');
 }
 
 main().catch(e => {

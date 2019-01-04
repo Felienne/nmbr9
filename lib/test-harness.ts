@@ -5,6 +5,10 @@ import { FastBoard } from "./fast-board";
 import { setupMaster } from "cluster";
 import { range, flatMap, mean, standardDeviation } from "./util";
 
+import fs = require('fs');
+import util = require('util');
+const appendFile = util.promisify(fs.appendFile);
+
 // Some decks that are always the same so that we can honestly evaluate
 // multiple runs of the same agent.
 export const FIXED_DECKS = [
@@ -56,7 +60,7 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
 
         console.log(`Deck played ${i+1} out of ${times} times`)
         console.log('Score: ', board.score());
-        console.log('Holes: ', board.holesAt(0))
+        console.log('Holes: ', board.holesAt(1));
         await player.gameFinished(board);
 
         ret.push(board.score());
@@ -97,7 +101,8 @@ export async function playStandardDecks(player: IPlayer, gamesPerDeck: number = 
        const stat = await playFixedDeck(player, sourceDeck, gamesPerDeck)
        allStats += stat;
        allStats += '\n';
-       
+       console.log(stat)
+       await appendFile('willow-stats.txt', stat + '\n');
        console.log(`Deck ${i+1} finished (out of ${FIXED_DECKS.length} decks)`)
        i++;
     }

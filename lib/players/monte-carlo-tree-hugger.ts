@@ -231,7 +231,7 @@ export class MonteCarloTreePlayer implements IPlayer {
         let i = 0;
         while ((maxIterations === undefined || i < maxIterations)
                 && (deadline === undefined || Date.now() <= deadline)) {
-            console.log('Thinking...');
+            //console.log('Thinking...');
             root.explore();
             i += 1;
         }
