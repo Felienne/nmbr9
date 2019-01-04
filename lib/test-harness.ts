@@ -56,7 +56,7 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
 
         console.log(`Deck played ${i+1} out of ${times} times`)
         console.log('Score: ', board.score());
-        console.log('Holes: ', board.holesAt(0))
+        console.log('Holes: ', board.holesAt(1));
         await player.gameFinished(board);
 
         ret.push(board.score());
@@ -97,7 +97,7 @@ export async function playStandardDecks(player: IPlayer, gamesPerDeck: number = 
        const stat = await playFixedDeck(player, sourceDeck, gamesPerDeck)
        allStats += stat;
        allStats += '\n';
-       
+       console.log(stat)
        console.log(`Deck ${i+1} finished (out of ${FIXED_DECKS.length} decks)`)
        i++;
     }

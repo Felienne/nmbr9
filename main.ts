@@ -7,33 +7,45 @@ import { Tile } from "./lib/tile";
 import { CandidateMove } from "./lib/board";
 
 function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMove[]{
-    const ret = moves.filter(move => {
-    
+    //new selection strategy, see how many holes are possible and select smallest options
+
+    function numberOfHolesForThisMove(move:CandidateMove){
         const board = new FastBoard(startingBoard);
-    
         board.playMove(move);
-    
-        const maxSize = 12;
-        const sizeOK = board.widthOfBoudingBox() < maxSize && board.heightOfBoundingBox() < maxSize;
-    
-        if (board.turnsPlayed < 5){
-            return board.holesAt(0) <= 6 ;
-        }
-        else{
-            return board.holesAt(0) <= 20 && sizeOK;
-        }
+        return board.holesAt(1);
+    }
+
+    function boundingBoxForThisMove(move:CandidateMove){
+        const board = new FastBoard(startingBoard);
+        board.playMove(move);
+        return board.sizeOfBoundingBox();
+    }
+
+
+
+    const allHoles = moves.map(numberOfHolesForThisMove);
+    const minNumberofHoles = Math.min(...allHoles)
+
+    const ret = moves.filter((move,i) => { 
+        return allHoles[i] === minNumberofHoles
     })
 
-    return ret;
+    const allBoundingBoxes = ret.map(boundingBoxForThisMove);
+    const minBoundingBox = Math.min(...allBoundingBoxes)
+
+    const ret2 = ret.filter((move,i) => { 
+        return allBoundingBoxes[i] === minBoundingBox
+    })
+
+    return ret2;
 
 }
 
 
 function boardCalculator(board: FastBoard):number{
 
-    return 50 + board.score()*2 - board.holesAt(0)*3; //reward for less holes
+    return board.score()*2 + board.maxHeight()*2;
 }
-
 
 const game = new Game([
     new RandomPlayer(),
