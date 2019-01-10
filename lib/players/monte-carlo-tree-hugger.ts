@@ -59,6 +59,8 @@ export class MonteCarloTreePlayer implements IPlayer {
         }
     }
 
+    public readonly explorationFactor = 100;
+
     public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
         const root = new MonteCarloTree(board, tile, deck, this);
 

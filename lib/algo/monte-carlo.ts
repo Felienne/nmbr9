@@ -101,7 +101,7 @@ export class MonteCarloTree {
 
             result = freshChild.randomPlayout();
         } else {
-            const bestChild = this.mostPromisingChild(this.timesVisited);
+            const bestChild = this.mostPromisingChild();
             if (bestChild === undefined) {
                 // There are no more moves to play here, probably because the
                 // board is filled up to the brim. We score what's currently
@@ -138,11 +138,11 @@ export class MonteCarloTree {
         return { score };
     }
 
-    private mostPromisingChild(totalGamesPlayed: number): MonteCarloTree | undefined {
+    private mostPromisingChild(): MonteCarloTree | undefined {
         let maximumUCB = 0;
         let bestChild: MonteCarloTree | undefined;
         for (const child of this.children.values()) {
-            const ucb = child.upperConfidenceBound(totalGamesPlayed);
+            const ucb = child.upperConfidenceBound(this.timesVisited);
             if (ucb >= maximumUCB) {
                 maximumUCB = ucb;
                 bestChild = child;
@@ -151,9 +151,8 @@ export class MonteCarloTree {
         return bestChild!;
     }
 
-    private upperConfidenceBound(totalGamesPlayed: number) {
-        const explorationFactor = 100; // Magic twiddle factor
-        return this.meanScore + explorationFactor * Math.sqrt(Math.log(totalGamesPlayed) / this.timesVisited);
+    private upperConfidenceBound(parentVisitCount: number) {
+        return this.meanScore + this.player.explorationFactor * Math.sqrt(Math.log(parentVisitCount) / this.timesVisited);
     }
 
     private filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove[] {
@@ -193,6 +192,14 @@ export interface TreeSearchSupport {
      * a board in which the player painted themselves into a corner.
      */
     scoreForBoard(board: FastBoard, dnf: boolean): number;
+
+    /**
+     * Trade-off between exploitation and exploration
+     *
+     * Lower = more exploitation (deeper search on moves that look good)
+     * Higher = more exploration (more exploration of moves)
+     */
+    readonly explorationFactor: number;
 }
 
 /**
