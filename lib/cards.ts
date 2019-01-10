@@ -33,6 +33,10 @@ export class Deck {
         }
     }
 
+    public get isEmpty(): boolean {
+        return this.allcards.length === 0;
+    }
+
     private shuffle():void
     {
         for (let i = this.allcards.length - 1; i > 0; i--) {
