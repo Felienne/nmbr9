@@ -58,3 +58,14 @@ export const TILE_COLORS = [
     '#D42242', // 9
 ];
 
+
+/**
+ * Represent a fraction roughly as a character
+ */
+export function roughFraction(x: number) {
+    const chars = '▁▂▃▄▅▆▇█';
+    if (x < 0.01) { return '∅'; }
+    if (x >= 0.99) { return chars[chars.length - 1]; }
+    const i = Math.floor(x / 0.125);
+    return chars[i];
+}

@@ -4,8 +4,7 @@ import { IPlayer } from "../player";
 import { pick, pickAndRemove, mean, sum } from '../util';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
-import { stream } from 'fast-check';
-import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from 'constants';
+import { roughFraction } from '../display';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
@@ -57,8 +56,8 @@ class Tree{
     public bestMove(){
         if (this.children.size === 0){
             //we have not explored, we know nothing (we are from Barcelona)
-            //we can returns any unexplored move, why not the first one?
-            return this.unexploredMoves[0];
+            //we can returns any unexplored move.
+            return pick(this.unexploredMoves);
         }
 
         let maximumMeanScore = 0
@@ -152,13 +151,15 @@ class Tree{
         return this.meanScore + explorationFactor * Math.sqrt(Math.log(totalGamesPlayed) / this.timesVisited);
     }
 
-    private filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck) {
+    private filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove[] {
+        if (moves.length === 0) { return []; }
+
         const makeMutable = startingBoard.makeImmutable();
         try {
             const acceptableMoves = this.player.selectBranches(startingBoard, moves);
+            process.stderr.write(roughFraction(acceptableMoves.length / moves.length));
             if (acceptableMoves.length === 0) {
-                console.log('Rejected all moves');
-                return [moves[0]];
+                return [pick(moves)!];
             }
             return acceptableMoves;
         } finally {
@@ -223,6 +224,7 @@ export class MonteCarloTreePlayer implements IPlayer {
     }
 
     public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
+        process.stderr.write('>');
         const deadline = this.options.maxThinkingTimeSec !== undefined ? Date.now() + this.options.maxThinkingTimeSec * 1000 : undefined;
         const maxIterations = this.options.maxIterations;
 
@@ -231,14 +233,16 @@ export class MonteCarloTreePlayer implements IPlayer {
         let i = 0;
         while ((maxIterations === undefined || i < maxIterations)
                 && (deadline === undefined || Date.now() <= deadline)) {
-            //console.log('Thinking...');
             root.explore();
+            process.stderr.write('·');
             i += 1;
         }
 
         if (this.options.printTreeStatistics) {
             this.printTreeStatistics(root);
         }
+
+        process.stderr.write('\n');
 
         return root.bestMove();
     }

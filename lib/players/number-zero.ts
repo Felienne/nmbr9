@@ -4,8 +4,11 @@ import { MonteCarloTreePlayer } from "./monte-carlo-tree-hugger";
 import { FastBoard, TILE_WIDTH, TILE_HEIGHT } from "../fast-board";
 import { CandidateMove } from "../board";
 import { mean } from "../util";
+import { roughFraction } from '../display';
 
-const MODEL_FILENAME = 'file://numberzero.model';
+const MODEL_DIR = 'file://numberzero.model';
+
+const AVG_OVER_GAMES = 10;
 
 // BranchSelector -- board + tile + move
 // Post-game feedback function
@@ -33,7 +36,7 @@ export class NumberZero extends MonteCarloTreePlayer {
     private readonly trainingSamples: tf.Tensor[] = [];
     private readonly decisions: number[] = [];
 
-    private readonly averageScores: number[] = [];
+    private readonly recentBests: number[] = [];
 
     constructor(options: NumberZeroOptions) {
         super(options);
@@ -45,52 +48,96 @@ export class NumberZero extends MonteCarloTreePlayer {
     public async initialize() {
         try {
             // Throws an error if file doesn't exist, in which case we use the defaulted model
-            this.model = await tf.loadModel(MODEL_FILENAME);
+            this.model = await tf.loadModel(MODEL_DIR + '/model.json');
+            console.log('Model loaded from disk.');
         } catch(e) {
-            console.error(e);
+            console.error(e.message);
+            console.log('Creating new model.');
             this.model = tf.sequential({
                 layers: [
-                    tf.layers.dense({ inputShape: [TILE_WIDTH*TILE_HEIGHT + 10 + 4], units: 100 }),
-                    tf.layers.dense({ units: 40 }),  // https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
-                    tf.layers.dense({ units: 1 }), // Output layer
+                    tf.layers.dense({
+                        inputShape: [TILE_WIDTH*TILE_HEIGHT + 10 + 4],
+                        units: 50,
+                        activation: 'relu',
+                        kernelInitializer: 'randomUniform',
+                        useBias: true
+                    }),
+                    tf.layers.dropout({ rate: 0.2 }),
+                    // https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
+                    tf.layers.dense({
+                        units: 40,
+                        activation: 'relu',
+                        kernelInitializer: 'randomUniform',
+                        useBias: true,
+                    }),
+                    tf.layers.dropout({ rate: 0.2 }),
+                    tf.layers.dense({
+                        units: 1,
+                        activation: 'sigmoid', // Get probabilty distribution between [0..1]
+                        kernelInitializer: 'randomUniform',
+                        useBias: true
+                    }),
                 ]
             });
         }
         // Why these settings?  ¯\_(ツ)_/¯
         // https://github.com/tensorflow/tfjs-examples/blob/master/website-phishing/index.js
-        this.model.compile({optimizer: 'adam', loss: 'binaryCrossentropy'});
+        this.model.compile({
+            optimizer: tf.train.sgd(0.01),
+            loss: 'binaryCrossentropy'
+        });
     }
 
     public async gameFinished(board: FastBoard): Promise<void> {
+        // Train on accumulated samples, reinforcing if our score is better
+        // than the current best score. The first round is used as a benchmark.
+        const firstRound = this.recentBests.length === 0;
+        console.log('Evaluating', board.score(), this.recentBests, mean(this.recentBests));
+        const goodRound = !firstRound && board.score() >= mean(this.recentBests);
+
+        if (true || goodRound || firstRound) {
+            this.recentBests.push(board.score());
+            if (this.recentBests.length > AVG_OVER_GAMES) {
+                this.recentBests.splice(0, 1);
+            }
+        }
+
+        // No training on first round
+        if (!firstRound) {
+            await this.trainNetwork(goodRound);
+        }
+
+        tf.dispose(this.trainingSamples);
+        this.trainingSamples.splice(0); // clear
+        this.decisions.splice(0); // clear
+    }
+
+    private async trainNetwork(goodRound: boolean) {
         if (!this.model) { throw new Error('Call initialize() first'); }
 
-        // Train on accumulated samples, reinforcing if our score is better
-        // than the
-        const meanScore = mean(this.averageScores);
         const decisionsTensor = tf.tidy(() => {
-            const decisionsTensor = tf.tensor1d(this.decisions);
-            if (board.score() >= meanScore) {
-                // Reinforce
+
+            if (!goodRound) {
+                console.log('We did not do so well--training down');
+                // Train on reversed decisions
+                for (let i = 0; i < this.decisions.length; i++) {
+                    this.decisions[i] = 1 - this.decisions[i];
+                }
+            } else {
                 console.log('We did well--training up!');
-                return decisionsTensor;
             }
 
-            // Should have predicted the opposite
-            console.log('We did not do so well--training down');
-            return decisionsTensor.mul(-1);
+            return tf.tensor1d(this.decisions);
         });
 
         const inputTensor = tf.concat(this.trainingSamples);
 
         await this.model.fit(inputTensor, decisionsTensor);
-        await this.model.save(MODEL_FILENAME);
+        await this.model.save(MODEL_DIR);
 
         // Clean that shit up
         tf.dispose(inputTensor);
         tf.dispose(decisionsTensor);
-        tf.dispose(this.trainingSamples);
-        this.trainingSamples.splice(0); // clear
-        this.decisions.splice(0); // clear
     }
 
     public selectBranches(board: FastBoard, moves: CandidateMove[]): CandidateMove[] {
@@ -119,10 +166,12 @@ export class NumberZero extends MonteCarloTreePlayer {
         });
 
         // Predictions for whether or not to pick these values
-        // Value >= 0 == select, < 0 == reject
-        const decisions: boolean[] = (outputTensor as any).dataSync().map((x: number) => x >= 0);
-        self.decisions.push(...decisions.map(x => x ? 1 : -1));
+        // Value >= 0.5 == select, < 0.5 == reject
+        const decisions: boolean[] = (outputTensor as any).dataSync().map((x: number) => x >= 0.5);
+        self.decisions.push(...decisions.map(x => x ? 1 : 0));
 
-        return moves.filter((_, i) => decisions[i]);
+        const ret = moves.filter((_, i) => decisions[i]);
+
+        return ret;
     }
 }

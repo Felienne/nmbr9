@@ -270,6 +270,16 @@ export class FastBoard {
         return ret;
     }
 
+    public fingerprint() {
+        var hash = 0, i, chr;
+        for (i = 0; i < this.heightMap.data.length; i++) {
+          chr   = this.heightMap.data[i];
+          hash  = ((hash << 5) - hash) + chr;
+          hash |= 0; // Convert to 32bit integer
+        }
+        return hash;
+    }
+
     /**
      * Turn a list of coordinates into a list of array indexes
      *
