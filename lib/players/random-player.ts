@@ -12,7 +12,7 @@ import { FastBoard } from '../fast-board';
 export class RandomPlayer implements IPlayer {
     public readonly name: string = 'Randy McRandFace';
 
-    public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
+    public async calculateMove(board: FastBoard, deck:Deck, tile: Tile): Promise<Move | undefined> {
 
         const loc = pick(board.getLegalMoves(tile));
 

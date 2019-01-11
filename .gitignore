@@ -3,3 +3,6 @@ node_modules
 .DS_Store
 !jest.config.js
 willow-stats.txt
+numberzero.model
+.vscode
+samples/

@@ -16,7 +16,7 @@ export class MonteCarloPlayer implements IPlayer {
         return 'determined by a fair dice roll';
     }
 
-    public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
+    public async calculateMove(board: FastBoard, deck:Deck, tile: Tile): Promise<Move | undefined> {
 
         const moves = board.getLegalMoves(tile);
         let maxMoveScore = 0;

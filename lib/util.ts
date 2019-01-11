@@ -20,6 +20,25 @@ export function pickAndRemove<T>(list:T[]){
     }
 }
 
+export function weightedPick<T>(xs: Array<[T, number]>): T | undefined {
+    if (xs.length === 0) { return undefined; }
+
+    let sum = 0;
+    for (const [x, w] of xs) {
+        if (w < 0) { throw new Error('Cannot have negative weight'); }
+        sum += w;
+    }
+
+    const nr = Math.random() * sum;
+
+    sum = 0;
+    for (const [x, w] of xs) {
+        sum += w;
+        if (nr <= sum) { return x; }
+    }
+    return xs[xs.length - 1][0];
+}
+
 /**
  * Return a random number between [a..b)
  */
@@ -81,7 +100,7 @@ export function sum(xs: number[]): number {
 
 export function mean(xs: number[]): number {
     const total = xs.reduce((a, b) => a + b, 0);
-    return Math.round(total / xs.length);
+    return xs.length > 0 ? Math.round(total / xs.length) : 0;
 }
 
 export function standardDeviation(values: number[]){
