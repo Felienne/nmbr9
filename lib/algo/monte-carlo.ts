@@ -29,8 +29,6 @@ export class MonteCarloTree<M> {
     // The tiles left in the deck after this tile has been played
     public readonly remainingDeck: Deck;
 
-    public readonly moveGettingHere?: MonteCarloMove<M>;
-
     /**
      * "Children" are explored submoves
      */
@@ -39,7 +37,9 @@ export class MonteCarloTree<M> {
     /**
      * Moves yet to explore
      */
-    public readonly unexploredMoves: MonteCarloMove<M>[];
+    public unexploredMoves: MonteCarloMove<M>[] = [];
+
+    public readonly legalMoves: CandidateMove[];
 
     // The scoring statistics for this node and all of its children
     public totalScore: number;
@@ -47,6 +47,8 @@ export class MonteCarloTree<M> {
 
     private possibleMoveCount: number;
     private support: TreeSearchSupport<M>;
+
+    private initialized: boolean = false;
 
     public get meanScore(): number{
         return this.totalScore / this.timesVisited;
@@ -57,24 +59,22 @@ export class MonteCarloTree<M> {
             tile:Tile | undefined,
             deck: Deck,
             support: TreeSearchSupport<M>,
-            moveGettingHere?: MonteCarloMove<M>
             ) {
         this.board = board;
         this.tile = tile;
         this.remainingDeck =  deck;
         this.support = support;
-        this.moveGettingHere = moveGettingHere;
 
         this.totalScore = 0;
         this.timesVisited = 0;
 
         if (tile) {
-            this.unexploredMoves = this.filterAcceptableMoves(board, board.getLegalMoves(tile), deck);
+            this.legalMoves = board.getLegalMoves(tile)
         } else {
-            this.unexploredMoves = [];
+            this.legalMoves = [];
         }
 
-        this.possibleMoveCount = this.unexploredMoves.length;
+        this.possibleMoveCount = this.legalMoves.length;
     }
 
     public bestMove(){
@@ -97,6 +97,11 @@ export class MonteCarloTree<M> {
     }
 
     public explore(): PlayoutResult {
+        if (this.initialized === false){
+            this.support.initializeNode(this)
+            this.initialized = true
+        }
+
         if (this.possibleMoveCount === 0) {
             // This is a leaf node or all possible moves got pruned. Just return the current score.
             return { score: this.support.scoreForBoard(this.board, !this.remainingDeck.isEmpty) };
@@ -115,7 +120,7 @@ export class MonteCarloTree<M> {
             const deckAfterMove = new Deck(this.remainingDeck);
             const nextTile = deckAfterMove.drawTile();
 
-            const freshChild = new MonteCarloTree(boardAfterMove, nextTile, deckAfterMove, this.support, toExplore);
+            const freshChild = new MonteCarloTree(boardAfterMove, nextTile, deckAfterMove, this.support);
             this.exploredMoves.set(toExplore, freshChild);
 
             result = freshChild.randomPlayout();
@@ -193,6 +198,8 @@ export interface PlayoutResult {
  * Callbacks that the MCTS uses to do its work
  */
 export interface TreeSearchSupport<M> {
+    initializeNode(node:MonteCarloTree<M>): void;
+
     /**
      * Restrict the search of a given node to a set of possible moves
      */

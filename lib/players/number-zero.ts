@@ -8,7 +8,8 @@ import { mean, weightedPick } from "../util";
 import { IPlayer } from '../player';
 import { Deck, CARD_TYPES } from '../cards';
 import { Tile } from '../tile';
-import { MonteCarloTree, performMcts, printTreeStatistics, MonteCarloMove, defaultUpperConfidenceBound } from '../algo/monte-carlo';
+import { MonteCarloTree, performMcts, printTreeStatistics, MonteCarloMove, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
+import { networkInterfaces } from 'os';
 
 const MODEL_DIR = 'file://numberzero.model';
 
@@ -42,7 +43,12 @@ export interface NumberZeroOptions {
  * Height map of entire board, plus a vector to indicate which tiles
  * are still left.
  */
-export class NumberZero implements IPlayer {
+export class NumberZero implements IPlayer, TreeSearchSupport<N0Move> {
+    
+    initializeNode(node: MonteCarloTree<N0Move>): void {
+        node.unexploredMoves = this.selectBranches(node.board, node.legalMoves, node.remainingDeck);
+    }
+
     public readonly name: string = 'Number Zero';
 
     private model?: tf.Model;
@@ -73,8 +79,7 @@ export class NumberZero implements IPlayer {
         const explorationFactor = 1;
         // We have a slighly modified UCB; incorporate the predicted value with
         // weight 1.
-        const adjustedMean = (node.totalScore + node.moveGettingHere!.annotation.predictedScore) / (node.timesVisited + 1);
-        return adjustedMean + explorationFactor * Math.sqrt(Math.log(parentVisitCount) / node.timesVisited);
+        return node.meanScore + explorationFactor * Math.sqrt(Math.log(parentVisitCount) / node.timesVisited);
     }
 
     /**

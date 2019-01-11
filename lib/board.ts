@@ -9,7 +9,7 @@ export enum Orientation {
 
 export class Board {
 
-    public readonly size:number;
+    public readonly size:number = 20;
 
     private _score : number;
 

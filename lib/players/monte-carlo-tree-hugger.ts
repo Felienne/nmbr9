@@ -4,7 +4,7 @@ import { IPlayer } from "../player";
 import { pick, pickAndRemove, mean, sum } from '../util';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
-import { MonteCarloTree, printTreeStatistics, performMcts, MonteCarloMove, defaultUpperConfidenceBound } from '../algo/monte-carlo';
+import { MonteCarloTree, printTreeStatistics, performMcts, MonteCarloMove, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
@@ -50,13 +50,18 @@ export type BranchSelectorFn = (board: FastBoard, moves: CandidateMove[]) => Can
 /**
  * This player executes MC tree search
  */
-export class MonteCarloTreePlayer implements IPlayer {
+export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
+
     public readonly name: string = 'Willow McTreeFace';
 
     constructor(protected readonly options: MonteCarloOptions) {
         if (options.maxIterations === undefined && options.maxThinkingTimeSec === undefined) {
             throw new Error('Supply at least maxIterations or maxThinkingTimeSec');
         }
+    }
+
+    initializeNode(node: MonteCarloTree<any>): void {
+        node.unexploredMoves = this.selectBranches(node.board, node.legalMoves)
     }
 
     public upperConfidenceBound(node: MonteCarloTree<any>, parentVisitCount: number) {

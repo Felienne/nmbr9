@@ -1,4 +1,4 @@
-import { Tile, getTile } from "./tile";
+import { Tile } from "./tile";
 
 export const CARD_TYPES = 10;
 
@@ -75,8 +75,7 @@ export class Deck {
         }
 
         const { turn, value }  = drawnCard;
-        const t = getTile(value);
-        t.turn = turn;
+        const t = new Tile(value, turn);
         return t;
     }
 

@@ -9,6 +9,7 @@
     "noFallthroughCasesInSwitch": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true
   }
 }

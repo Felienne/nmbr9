@@ -18,6 +18,12 @@ export class Tile {
                              // of the same number, since it is not allowed to place a tile on one instance.
                              // since there is only one tile per turn, this serves as identity
 
+    constructor(value: number, turn:number){
+        this.value = value;
+        this.form = getForm(value);
+        this.turn = turn;
+    }
+
     public getOnes(d:Orientation){
         return this.getNumberLocations(1, d);
     }
@@ -61,15 +67,13 @@ export class Tile {
     }
 }
 
-export function getTile(n:number): Tile {
-    if (n<0 || n>9) throw new Error('Value of a tile can only be from 0 to 9.');
+export function getForm(value:number): number[][] {
+    if (value<0 || value>9) throw new Error('Value of a tile can only be from 0 to 9.');
 
-    let t = new Tile;
-    t.value = n;
-
-    switch(n) {
+    let form: number[][]
+    switch(value) {
         case 0: {
-            t.form = [[0,v,v,v,0,0],
+            form = [[0,v,v,v,0,0],
                       [v,1,1,1,v,0],
                       [v,1,0,1,v,0],
                       [v,1,0,1,v,0],
@@ -78,7 +82,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 1: {
-            t.form = [[0,v,v,0,0,0],
+            form = [[0,v,v,0,0,0],
                       [v,1,1,v,0,0],
                       [0,v,1,v,0,0],
                       [0,v,1,v,0,0],
@@ -87,7 +91,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 2: {
-            t.form = [[0,0,v,v,0,0],
+            form = [[0,0,v,v,0,0],
                       [0,v,1,1,v,0],
                       [0,v,1,1,v,0],
                       [v,1,1,v,0,0],
@@ -96,7 +100,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 3: {
-            t.form = [[0,v,v,v,0,0],
+            form = [[0,v,v,v,0,0],
                       [v,1,1,1,v,0],
                       [0,v,v,1,v,0],
                       [0,v,1,1,v,0],
@@ -105,7 +109,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 4: {
-            t.form = [[0,0,v,v,0,0],
+            form = [[0,0,v,v,0,0],
                       [0,v,1,1,v,0],
                       [0,v,1,v,0,0],
                       [v,1,1,1,v,0],
@@ -114,7 +118,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 5: {
-            t.form = [[0,v,v,v,0,0],
+            form = [[0,v,v,v,0,0],
                       [v,1,1,1,v,0],
                       [v,1,1,1,v,0],
                       [0,v,v,1,v,0],
@@ -123,7 +127,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 6: {
-            t.form = [[0,v,v,0,0,0],
+            form = [[0,v,v,0,0,0],
                       [v,1,1,v,0,0],
                       [v,1,v,v,0,0],
                       [v,1,1,1,v,0],
@@ -132,7 +136,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 7: {
-            t.form = [[0,v,v,v,0,0],
+            form = [[0,v,v,v,0,0],
                       [v,1,1,1,v,0],
                       [0,v,1,v,0,0],
                       [v,1,1,v,0,0],
@@ -141,7 +145,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 8: {
-            t.form = [[0,0,v,v,0,0],
+            form = [[0,0,v,v,0,0],
                       [0,v,1,1,v,0],
                       [0,v,1,1,v,0],
                       [v,1,1,v,0,0],
@@ -150,7 +154,7 @@ export function getTile(n:number): Tile {
             break;
         }
         case 9: {
-            t.form = [[0,v,v,v,0,0],
+            form = [[0,v,v,v,0,0],
                       [v,1,1,1,v,0],
                       [v,1,1,1,v,0],
                       [v,1,1,v,0,0],
@@ -160,5 +164,5 @@ export function getTile(n:number): Tile {
         }
     }
 
-    return t;
+    return form!
 }

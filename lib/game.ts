@@ -1,7 +1,7 @@
 import { IPlayer } from "./player";
 import { Deck } from "./cards";
 import { Board } from "./board";
-import { getTile } from "./tile";
+import { Tile } from "./tile";
 import { Timer } from "./util";
 import { displayBoard, displayMove } from "./display";
 import { FastBoard } from "./fast-board";
@@ -33,8 +33,7 @@ export class Game {
         while (drawnCard !== false) {
             const { turn, value }  = drawnCard;
 
-            const tile = getTile(value);
-            tile.turn = turn;
+            const tile = new Tile(value, turn);
             console.log("Turn:", turn, " | Tile:", value);
 
             // Give all non-disqualified players a chance to move

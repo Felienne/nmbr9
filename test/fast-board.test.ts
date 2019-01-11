@@ -4,16 +4,16 @@ import assert = require('assert');
 import fc = require('fast-check');
 import { Board, Orientation, Point, Move } from '../lib/board';
 import { FastBoard } from '../lib/fast-board';
-import { Tile, getTile } from '../lib/tile';
+import { Tile } from '../lib/tile';
 import { displayBoard } from '../lib/display';
 import { randInt, timeIt } from '../lib/util';
 
 test('FastBoard trivial move', () => {
     // GIVEN
     const fb = new FastBoard();
-    fb.place(getTile(0), { x: 0, y: 5, orientation: 1});
+    fb.place(new Tile(0,1), { x: 0, y: 5, orientation: 1});
 
-    expect(fb.canPlace(getTile(8), { x: 54, y: 29, orientation: 1})).toBeFalsy();
+    expect(fb.canPlace(new Tile(8,1), { x: 54, y: 29, orientation: 1})).toBeFalsy();
 });
 
 test('FastBoard and Board behave the same', () => {
@@ -51,7 +51,7 @@ test('FastBoard is actually faster -- canPlace() edition', () => {
     // WHEN
     const options = board.getAllMoves();
     const N = 100;
-    const tile = getTile(5);
+    const tile = new Tile(5,1);
 
     const boardTime = timeIt(N, () => options.filter(p => board.canPlace(tile, p)));
     const fastBoardTime = timeIt(N, () => options.filter(p => fastBoard.canPlace(tile, p)));
@@ -104,7 +104,7 @@ class PlaceAbsoluteCommand implements BoardsCommand {
             private readonly x: number,
             private readonly y: number,
             private readonly orientation : Orientation) {
-        this.tile = getTile(tileNumber);
+        this.tile = new Tile(tileNumber,1);
     }
 
     public check(m: Readonly<Boards>): boolean {
@@ -137,7 +137,7 @@ class PlaceRelativeCommand implements BoardsCommand {
     private readonly tile: Tile;
 
     constructor(tileNumber: number, private readonly moveNumber: number) {
-        this.tile = getTile(tileNumber);
+        this.tile = new Tile(tileNumber,1);
     }
 
     public check(m: Readonly<Boards>): boolean {
@@ -173,7 +173,7 @@ function assertBoardsEqual(m: Boards) {
 
 function forSomeMoves(n: number, board: Board, fn: (t: Tile, m: Move) => void) {
     for (let i = 0; i < n; i++) {
-        const tile = getTile(randInt(0, 10));
+        const tile = new Tile(randInt(0, 10), i);
         const moves = board.getLegalMoves(tile);
         const move = moves[randInt(0, moves.length)];
         fn(tile, move);
