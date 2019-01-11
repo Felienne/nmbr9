@@ -2,3 +2,4 @@
 node_modules
 .DS_Store
 !jest.config.js
+willow-stats.txt
