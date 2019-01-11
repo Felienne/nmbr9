@@ -12,29 +12,27 @@ function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMov
     function numberOfHolesForThisMove(move:CandidateMove){
         const board = new FastBoard(startingBoard);
         board.playMove(move);
-        return board.holesAt(1);
+        return board.holesAt(move.targetLevel);
     }
 
     function boundingBoxForThisMove(move:CandidateMove){
         const board = new FastBoard(startingBoard);
         board.playMove(move);
-        return board.sizeOfBoundingBox();
+        return board.sizeOfBoundingBox(1);
     }
-
-
 
     const allHoles = moves.map(numberOfHolesForThisMove);
     const minNumberofHoles = Math.min(...allHoles)
 
     const ret = moves.filter((move,i) => { 
-        return allHoles[i] === minNumberofHoles
+        return allHoles[i] <= minNumberofHoles + 3
     })
 
     const allBoundingBoxes = ret.map(boundingBoxForThisMove);
     const minBoundingBox = Math.min(...allBoundingBoxes)
 
     const ret2 = ret.filter((move,i) => { 
-        return allBoundingBoxes[i] === minBoundingBox
+        return allBoundingBoxes[i] <= minBoundingBox + 5 
     })
 
     return ret2;
@@ -44,13 +42,13 @@ function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMov
 
 function boardCalculator(board: FastBoard):number{
 
-    return board.score()*2 + board.maxHeight()*2;
+    return board.score();
 }
 
 const game = new Game([
-    new RandomPlayer(),
+    //new RandomPlayer(),
     new MonteCarloTreePlayer({
-        maxIterations: 100,
+        maxIterations: 1000,
         printTreeStatistics: true,
         boardScoreCalculator: boardCalculator,
         branchSelector: selector,

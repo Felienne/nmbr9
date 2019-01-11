@@ -286,10 +286,33 @@ export class FastBoard {
         return ret;
     }
 
-    public sizeOfBoundingBox():number{
-        const b = this.boundingBox;
-        const size = this.widthOfBoudingBox() * this.heightOfBoundingBox();
-        return size;
+    public sizeOfBoundingBox(level:number):number{
+        if (level === 1){
+            const b = this.boundingBox;
+            const size = this.widthOfBoudingBox() * this.heightOfBoundingBox();
+            return size;
+        }
+        else{
+            //find min and max point of this level:
+            let minx = 80
+            let miny = 80
+            let maxx = -80
+            let maxy = -80
+
+            for (let x = this.boundingBox.topLeft.x; x <= this.boundingBox.botRight.x; x++) {
+                for (let y = this.boundingBox.topLeft.y; y <= this.boundingBox.botRight.y; y++) {
+                    if (this.heightMap.at(x, y) === level) {
+                        if (x < minx) minx = x;
+                        if (y < miny) miny = y;
+                        if (x > maxx) maxx = x;
+                        if (y > maxy) maxy = y;                       
+                    } 
+                };
+            }
+        const ret = (maxx-minx) * (maxy-miny)
+        //console.log(ret)
+        return ret;
+        }
     }
 
     public widthOfBoudingBox():number{
