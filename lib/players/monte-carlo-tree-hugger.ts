@@ -4,7 +4,7 @@ import { IPlayer } from "../player";
 import { pick, pickAndRemove, mean, sum } from '../util';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
-import { MonteCarloTree, printTreeStatistics, performMcts } from '../algo/monte-carlo';
+import { MonteCarloTree, printTreeStatistics, performMcts, MonteCarloMove, defaultUpperConfidenceBound } from '../algo/monte-carlo';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
@@ -59,9 +59,12 @@ export class MonteCarloTreePlayer implements IPlayer {
         }
     }
 
-    public readonly explorationFactor = 100;
+    public upperConfidenceBound(node: MonteCarloTree<any>, parentVisitCount: number) {
+        const explorationFactor = 100;
+        return defaultUpperConfidenceBound(node, parentVisitCount, explorationFactor);
+    }
 
-    public calculateMove(board: FastBoard, deck:Deck, tile: Tile): Move | undefined {
+    public async calculateMove(board: FastBoard, deck:Deck, tile: Tile): Promise<Move | undefined> {
         const root = new MonteCarloTree(board, tile, deck, this);
 
         performMcts(root, this.options);
@@ -70,7 +73,8 @@ export class MonteCarloTreePlayer implements IPlayer {
             printTreeStatistics(root);
         }
 
-        return root.bestMove();
+        const bestMove = root.bestMove();
+        return bestMove && bestMove.move;
     }
 
     public printIterationsAndSelector(){
@@ -83,8 +87,19 @@ export class MonteCarloTreePlayer implements IPlayer {
     /**
      * Called by the Tree Search to prune the game tree
      */
-    public selectBranches(board: FastBoard, moves: CandidateMove[]): CandidateMove[] {
-        return this.options.branchSelector ? this.options.branchSelector(board, moves) : moves;
+    public selectBranches(board: FastBoard, moves: CandidateMove[]): MonteCarloMove<undefined>[] {
+        const selectedMoves = this.options.branchSelector ? this.options.branchSelector(board, moves) : moves;
+        return selectedMoves.map(move => ({ move, annotation: undefined }));
+    }
+
+    /**
+     * Return a move to be used for a random playout
+     *
+     * We do a purely random selection from all acceptable moves
+     */
+    public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<undefined> | undefined {
+        const acceptableMoves = this.selectBranches(startingBoard, moves);
+        return pick(acceptableMoves);
     }
 
     public scoreForBoard(board: FastBoard) {

@@ -38,7 +38,7 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
 
         let tile = deck.drawTile();
         while (tile !== undefined) {
-            const move = player.calculateMove(board, deck, tile);
+            const move = await player.calculateMove(board, deck, tile);
             if (move === undefined) {
                 if (deck.remainingCards.length===0){
                     //if we have just 1 tile left, we could always place it at 0 and continue with just this score

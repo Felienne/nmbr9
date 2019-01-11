@@ -48,7 +48,7 @@ export class Game {
                     const copiedDeck = new Deck(this.deck);
                     const copiedBoard = new FastBoard(player.board);
 
-                    const move = player.logic.calculateMove(copiedBoard, copiedDeck, tile);
+                    const move = await player.logic.calculateMove(copiedBoard, copiedDeck, tile);
                     if (move !== undefined) {
                         player.board.place(tile, move);
                         console.log(player.logic.name, "plays", displayMove(move), "(score so far:", player.board.score(), ")");

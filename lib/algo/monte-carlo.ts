@@ -6,30 +6,47 @@ import { Deck } from '../cards';
 import { Move, CandidateMove } from '../board';
 
 /**
+ * A move in the monte carlo tree
+ *
+ * It's a CandidateMove with additional data of some type.
+ */
+export interface MonteCarloMove<M> {
+    move: CandidateMove;
+    annotation: M;
+}
+
+/**
  * An implementation of MCTS for Nmbr9
  */
 
 /**
  * A node in a Monte Carlo Tree
  */
-export class MonteCarloTree {
+export class MonteCarloTree<M> {
     public readonly board: FastBoard;
     // The tile to be played this round
     public readonly tile?: Tile;
-    // The tiles left in the deck
-    public readonly deck: Deck;
+    // The tiles left in the deck after this tile has been played
+    public readonly remainingDeck: Deck;
 
-    //children contains the subtree that is formed from the board by making the corresponding move
-    public readonly children = new Map <CandidateMove, MonteCarloTree>();
+    public readonly moveGettingHere?: MonteCarloMove<M>;
 
-    public readonly unexploredMoves: CandidateMove[];
+    /**
+     * "Children" are explored submoves
+     */
+    public readonly exploredMoves = new Map<MonteCarloMove<M>, MonteCarloTree<M>>();
+
+    /**
+     * Moves yet to explore
+     */
+    public readonly unexploredMoves: MonteCarloMove<M>[];
 
     // The scoring statistics for this node and all of its children
     public totalScore: number;
     public timesVisited: number;
 
     private possibleMoveCount: number;
-    private player: TreeSearchSupport;
+    private support: TreeSearchSupport<M>;
 
     public get meanScore(): number{
         return this.totalScore / this.timesVisited;
@@ -39,12 +56,14 @@ export class MonteCarloTree {
             board: FastBoard,
             tile:Tile | undefined,
             deck: Deck,
-            player: TreeSearchSupport
+            support: TreeSearchSupport<M>,
+            moveGettingHere?: MonteCarloMove<M>
             ) {
         this.board = board;
         this.tile = tile;
-        this.deck =  deck;
-        this.player = player;
+        this.remainingDeck =  deck;
+        this.support = support;
+        this.moveGettingHere = moveGettingHere;
 
         this.totalScore = 0;
         this.timesVisited = 0;
@@ -59,7 +78,7 @@ export class MonteCarloTree {
     }
 
     public bestMove(){
-        if (this.children.size === 0){
+        if (this.exploredMoves.size === 0){
             //we have not explored, we know nothing (we are from Barcelona)
             //we can returns any unexplored move.
             return pick(this.unexploredMoves);
@@ -67,7 +86,7 @@ export class MonteCarloTree {
 
         let maximumMeanScore = 0
         let bestMove = undefined;
-        for (const [move, child] of this.children.entries()){
+        for (const [move, child] of this.exploredMoves.entries()){
             if (child.meanScore >= maximumMeanScore){
                 maximumMeanScore = child.meanScore;
                 bestMove = move;
@@ -80,33 +99,34 @@ export class MonteCarloTree {
     public explore(): PlayoutResult {
         if (this.possibleMoveCount === 0) {
             // This is a leaf node or all possible moves got pruned. Just return the current score.
-            return { score: this.player.scoreForBoard(this.board, !this.deck.isEmpty) };
+            return { score: this.support.scoreForBoard(this.board, !this.remainingDeck.isEmpty) };
         }
 
         let result;
         if (this.unexploredMoves.length !== 0){
             const toExplore = pickAndRemove(this.unexploredMoves)!;
             const boardAfterMove = new FastBoard(this.board);
-            boardAfterMove.place(this.tile!, toExplore);
+            boardAfterMove.place(this.tile!, toExplore.move);
 
             // Determine the next tile to be played, and what's left becomes the
             // Deck.
             // TODO: Our life would be sooooooooo much easier if Deck was all the
             // tiles with a '.currentTile' accessor (or something)
-            const deckAfterMove = new Deck(this.deck);
+            const deckAfterMove = new Deck(this.remainingDeck);
             const nextTile = deckAfterMove.drawTile();
 
-            const freshChild = new MonteCarloTree(boardAfterMove, nextTile, deckAfterMove, this.player);
-            this.children.set(toExplore, freshChild);
+            const freshChild = new MonteCarloTree(boardAfterMove, nextTile, deckAfterMove, this.support, toExplore);
+            this.exploredMoves.set(toExplore, freshChild);
 
             result = freshChild.randomPlayout();
         } else {
             const bestChild = this.mostPromisingChild();
             if (bestChild === undefined) {
+                console.log('This should never happen');
                 // There are no more moves to play here, probably because the
                 // board is filled up to the brim. We score what's currently
                 // on the board.
-                return { score: this.player.scoreForBoard(this.board, true) };
+                return { score: this.support.scoreForBoard(this.board, true) };
             }
             result = bestChild.explore();
         }
@@ -118,31 +138,30 @@ export class MonteCarloTree {
 
     private randomPlayout(): PlayoutResult {
         const playoutBoard = new FastBoard(this.board);
-        const playoutDeck = new Deck(this.deck);
+        const playoutDeck = new Deck(this.remainingDeck);
 
         let tile = this.tile;
         while (tile !== undefined) {
             // Random move met tile
-            const moves = this.filterAcceptableMoves(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck);
-            const move = pick(moves);
+            const move = this.support.pickRandomPlayoutMove(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck);
 
-            if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
-            playoutBoard.place(tile, move);
+            if (move === undefined) { break; }
+            playoutBoard.playMove(move.move);
 
             tile = playoutDeck.drawTile();
         }
 
-        const score = this.player.scoreForBoard(playoutBoard, !playoutDeck.isEmpty);
+        const score = this.support.scoreForBoard(playoutBoard, tile !== undefined);
         this.totalScore += score;
         this.timesVisited += 1;
         return { score };
     }
 
-    private mostPromisingChild(): MonteCarloTree | undefined {
+    private mostPromisingChild(): MonteCarloTree<M> | undefined {
         let maximumUCB = 0;
-        let bestChild: MonteCarloTree | undefined;
-        for (const child of this.children.values()) {
-            const ucb = child.upperConfidenceBound(this.timesVisited);
+        let bestChild: MonteCarloTree<M> | undefined;
+        for (const child of this.exploredMoves.values()) {
+            const ucb = this.support.upperConfidenceBound(child, this.timesVisited);
             if (ucb >= maximumUCB) {
                 maximumUCB = ucb;
                 bestChild = child;
@@ -151,20 +170,14 @@ export class MonteCarloTree {
         return bestChild!;
     }
 
-    private upperConfidenceBound(parentVisitCount: number) {
-        return this.meanScore + this.player.explorationFactor * Math.sqrt(Math.log(parentVisitCount) / this.timesVisited);
-    }
-
-    private filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove[] {
+    private filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<M>[] {
         if (moves.length === 0) { return []; }
 
         const makeMutable = startingBoard.makeImmutable();
         try {
-            const acceptableMoves = this.player.selectBranches(startingBoard, moves);
+            const acceptableMoves = this.support.selectBranches(startingBoard, moves, remainingDeck);
             process.stderr.write(roughFraction(acceptableMoves.length / moves.length));
-            if (acceptableMoves.length === 0) {
-                return [pick(moves)!];
-            }
+            // If this returns nothing, we're effed.
             return acceptableMoves;
         } finally {
             makeMutable();
@@ -179,11 +192,16 @@ export interface PlayoutResult {
 /**
  * Callbacks that the MCTS uses to do its work
  */
-export interface TreeSearchSupport {
+export interface TreeSearchSupport<M> {
     /**
      * Restrict the search of a given node to a set of possible moves
      */
-    selectBranches(startingBoard: FastBoard, moves: CandidateMove[]): CandidateMove[];
+    selectBranches(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<M>[];
+
+    /**
+     * Return a move to be used for a random playout
+     */
+    pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<M> | undefined;
 
     /**
      * Return the score for a given board
@@ -194,29 +212,28 @@ export interface TreeSearchSupport {
     scoreForBoard(board: FastBoard, dnf: boolean): number;
 
     /**
-     * Trade-off between exploitation and exploration
+     * Return the UCB for a given node
      *
-     * Lower = more exploitation (deeper search on moves that look good)
-     * Higher = more exploration (more exploration of moves)
+     * The node with the highest UCB will be explored.
      */
-    readonly explorationFactor: number;
+    upperConfidenceBound(node: MonteCarloTree<M>, parentVisitCount: number): number;
 }
 
 /**
  * Take a tree and calculate and print some pertinent statistics of it
  */
-export function printTreeStatistics(root: MonteCarloTree) {
+export function printTreeStatistics<M>(root: MonteCarloTree<M>) {
     const stats: TreeStats = {
         maxDepth: 0,
         totalChildren: [],
         unexploredChildren: [],
     };
 
-    function visit(node: MonteCarloTree, depth: number) {
+    function visit(node: MonteCarloTree<M>, depth: number) {
         stats.maxDepth = Math.max(depth, stats.maxDepth);
-        stats.totalChildren.push(node.unexploredMoves.length + node.children.size);
+        stats.totalChildren.push(node.unexploredMoves.length + node.exploredMoves.size);
         stats.unexploredChildren.push(node.unexploredMoves.length);
-        for (const child of node.children.values()) {
+        for (const child of node.exploredMoves.values()) {
             visit(child, depth + 1);
         }
     }
@@ -245,7 +262,7 @@ export interface MctsOptions {
 /**
  * Perform MCTS search
  */
-export function performMcts(root: MonteCarloTree, options: MctsOptions) {
+export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
     process.stderr.write('>');
 
     const deadline = options.maxThinkingTimeSec !== undefined ? Date.now() + options.maxThinkingTimeSec * 1000 : undefined;
@@ -262,4 +279,12 @@ export function performMcts(root: MonteCarloTree, options: MctsOptions) {
     process.stderr.write('\n');
 
     return root.bestMove();
+}
+
+/**
+ * Default UCB calculcation
+ * @param explorationFactor Lower = deeper, higher = wider tree
+ */
+export function defaultUpperConfidenceBound<M>(node: MonteCarloTree<M>, parentVisitCount: number, explorationFactor: number) {
+    return node.meanScore + explorationFactor * Math.sqrt(Math.log(parentVisitCount) / node.timesVisited);
 }

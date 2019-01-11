@@ -4,3 +4,4 @@ node_modules
 !jest.config.js
 numberzero.model
 .vscode
+samples/

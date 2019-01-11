@@ -5,6 +5,7 @@ import { Field } from "./field";
 
 export const TILE_WIDTH = 5;
 export const TILE_HEIGHT = 6;
+export const BOARD_SIZE = 14;
 
 /**
  * A class similar to Board (but hopefully faster) which can be copied
@@ -27,12 +28,12 @@ export class FastBoard {
      /**
      * Size of the field which can be played on
      */
-    public readonly size = 20
+    public readonly size = BOARD_SIZE;
 
     /**
      * Memory for the height map
      */
-    private readonly heightMap: Field;
+    public readonly heightMap: Field;
 
     /**
      * Memory for the tile data
@@ -107,6 +108,15 @@ export class FastBoard {
 
     public playMove(move: CandidateMove): void {
         this.place(move.tile, move);
+    }
+
+    /**
+     * Play a move and return a copy of the board
+     */
+    public playMoveCopy(move: CandidateMove): FastBoard {
+        const ret = new FastBoard(this);
+        ret.playMove(move);
+        return ret;
     }
 
     public place(tile: Tile, place: Move): void {

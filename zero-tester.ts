@@ -1,9 +1,9 @@
 import { NumberZero } from "./lib/players/number-zero";
-import { playStandardDecks, playFixedDeck, FIXED_DECKS } from "./lib/test-harness";
+import { playFixedDeck, FIXED_DECKS } from "./lib/test-harness";
 
 async function main() {
     const player = new NumberZero({
-        maxIterations: 5
+        maxIterations: 50
     });
 
     await player.initialize();

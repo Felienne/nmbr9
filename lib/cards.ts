@@ -1,5 +1,7 @@
 import { Tile, getTile } from "./tile";
 
+export const CARD_TYPES = 10;
+
 export interface tuple {
     turn: number;
     value: number;
@@ -35,6 +37,14 @@ export class Deck {
 
     public get isEmpty(): boolean {
         return this.allcards.length === 0;
+    }
+
+    public remainingHisto(): number[] {
+        const ret = new Array(CARD_TYPES).fill(0);
+        for (const card of this.allcards) {
+            ret[card]++;
+        }
+        return ret;
     }
 
     private shuffle():void

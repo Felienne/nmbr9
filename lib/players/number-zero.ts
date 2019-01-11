@@ -1,17 +1,16 @@
 require('@tensorflow/tfjs-node'); // Speed up TensorFlow by including this before the actual library
+import fs = require('fs');
 import tf = require('@tensorflow/tfjs');
-import { MonteCarloTreePlayer } from "./monte-carlo-tree-hugger";
-import { FastBoard, TILE_WIDTH, TILE_HEIGHT } from "../fast-board";
-import { CandidateMove } from "../board";
-import { mean } from "../util";
-import { roughFraction } from '../display';
+import util = require('util');
+import { FastBoard, BOARD_SIZE } from "../fast-board";
+import { CandidateMove, Move } from "../board";
+import { mean, weightedPick } from "../util";
+import { IPlayer } from '../player';
+import { Deck, CARD_TYPES } from '../cards';
+import { Tile } from '../tile';
+import { MonteCarloTree, performMcts, printTreeStatistics, MonteCarloMove, defaultUpperConfidenceBound } from '../algo/monte-carlo';
 
 const MODEL_DIR = 'file://numberzero.model';
-
-const AVG_OVER_GAMES = 10;
-
-// BranchSelector -- board + tile + move
-// Post-game feedback function
 
 export interface NumberZeroOptions {
     /**
@@ -23,23 +22,59 @@ export interface NumberZeroOptions {
      * How many seconds to run, at most
      */
     maxThinkingTimeSec?: number;
+
+    /**
+     * Print tree statistics at the end of a move
+     */
+    printTreeStatistics?: boolean;
 }
 
-export class NumberZero extends MonteCarloTreePlayer {
+/**
+ * NN-based player
+ *
+ * Current strategy, inspired by but not actually copying AlphaZero:
+ *
+ * - Try to teach the NN to predict final board scores.
+ * - Pick moves according to predicted board scores.
+ *
+ * NN input:
+ *
+ * Height map of entire board, plus a vector to indicate which tiles
+ * are still left.
+ */
+export class NumberZero implements IPlayer {
     public readonly name: string = 'Number Zero';
 
     private model?: tf.Model;
 
-    // These fields will be used to keep track of what decisions we made
-    // during the most recent game. They will be converted into training
-    // samples when the game concludes.
-    private readonly trainingSamples: tf.Tensor[] = [];
-    private readonly decisions: number[] = [];
+    constructor(private readonly options: NumberZeroOptions) {
+    }
 
-    private readonly recentBests: number[] = [];
+    public async calculateMove(board: FastBoard, remainingDeck: Deck, tile: Tile): Promise<Move | undefined> {
+        const root = new MonteCarloTree(board, tile, remainingDeck, this);
 
-    constructor(options: NumberZeroOptions) {
-        super(options);
+        performMcts(root, this.options);
+
+        if (this.options.printTreeStatistics) {
+            printTreeStatistics(root);
+        }
+
+        await this.trainNetwork(root, remainingDeck);
+
+        const bestMove = root.bestMove();
+        return bestMove && bestMove.move;
+    }
+
+    public printIterationsAndSelector(): string {
+        return '';
+    }
+
+    public upperConfidenceBound(node: MonteCarloTree<N0Move>, parentVisitCount: number) {
+        const explorationFactor = 1;
+        // We have a slighly modified UCB; incorporate the predicted value with
+        // weight 1.
+        const adjustedMean = (node.totalScore + node.moveGettingHere!.annotation.predictedScore) / (node.timesVisited + 1);
+        return adjustedMean + explorationFactor * Math.sqrt(Math.log(parentVisitCount) / node.timesVisited);
     }
 
     /**
@@ -53,27 +88,25 @@ export class NumberZero extends MonteCarloTreePlayer {
         } catch(e) {
             console.error(e.message);
             console.log('Creating new model.');
+            // The shape of this network has been literally pulled out of my ass
             this.model = tf.sequential({
                 layers: [
                     tf.layers.dense({
-                        inputShape: [TILE_WIDTH*TILE_HEIGHT + 10 + 4],
-                        units: 50,
+                        inputShape: [BOARD_SIZE * BOARD_SIZE + CARD_TYPES],
+                        units: 150,
                         activation: 'relu',
                         kernelInitializer: 'randomUniform',
                         useBias: true
                     }),
-                    tf.layers.dropout({ rate: 0.2 }),
-                    // https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
                     tf.layers.dense({
-                        units: 40,
+                        units: 50,
                         activation: 'relu',
                         kernelInitializer: 'randomUniform',
                         useBias: true,
                     }),
-                    tf.layers.dropout({ rate: 0.2 }),
                     tf.layers.dense({
                         units: 1,
-                        activation: 'sigmoid', // Get probabilty distribution between [0..1]
+                        activation: 'relu',
                         kernelInitializer: 'randomUniform',
                         useBias: true
                     }),
@@ -81,97 +114,118 @@ export class NumberZero extends MonteCarloTreePlayer {
             });
         }
         // Why these settings?  ¯\_(ツ)_/¯
-        // https://github.com/tensorflow/tfjs-examples/blob/master/website-phishing/index.js
         this.model.compile({
             optimizer: tf.train.sgd(0.01),
-            loss: 'binaryCrossentropy'
+            loss: 'meanSquaredError'
         });
     }
 
     public async gameFinished(board: FastBoard): Promise<void> {
-        // Train on accumulated samples, reinforcing if our score is better
-        // than the current best score. The first round is used as a benchmark.
-        const firstRound = this.recentBests.length === 0;
-        console.log('Evaluating', board.score(), this.recentBests, mean(this.recentBests));
-        const goodRound = !firstRound && board.score() >= mean(this.recentBests);
-
-        if (true || goodRound || firstRound) {
-            this.recentBests.push(board.score());
-            if (this.recentBests.length > AVG_OVER_GAMES) {
-                this.recentBests.splice(0, 1);
-            }
-        }
-
-        // No training on first round
-        if (!firstRound) {
-            await this.trainNetwork(goodRound);
-        }
-
-        tf.dispose(this.trainingSamples);
-        this.trainingSamples.splice(0); // clear
-        this.decisions.splice(0); // clear
     }
 
-    private async trainNetwork(goodRound: boolean) {
+    /**
+     * Return all branches, but annotate them with a predicted score.
+     */
+    public selectBranches(board: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<N0Move>[] {
         if (!this.model) { throw new Error('Call initialize() first'); }
-
-        const decisionsTensor = tf.tidy(() => {
-
-            if (!goodRound) {
-                console.log('We did not do so well--training down');
-                // Train on reversed decisions
-                for (let i = 0; i < this.decisions.length; i++) {
-                    this.decisions[i] = 1 - this.decisions[i];
-                }
-            } else {
-                console.log('We did well--training up!');
-            }
-
-            return tf.tensor1d(this.decisions);
-        });
-
-        const inputTensor = tf.concat(this.trainingSamples);
-
-        await this.model.fit(inputTensor, decisionsTensor);
-        await this.model.save(MODEL_DIR);
-
-        // Clean that shit up
-        tf.dispose(inputTensor);
-        tf.dispose(decisionsTensor);
-    }
-
-    public selectBranches(board: FastBoard, moves: CandidateMove[]): CandidateMove[] {
-        if (!this.model) { throw new Error('Call initialize() first'); }
+        if (moves.length === 0) { return []; }
         const self = this;
 
-        const outputTensor = tf.tidy(() => {
-            // Input tensors are not disposed!
-            const inputTensors = moves.map(move => {
-                // Get the height map at the given position and level.
-                const localArea = tf.tensor1d(board.heightMapAtLevel(move, TILE_WIDTH, TILE_HEIGHT, move.targetLevel).data).toFloat();
-                const tileNr = tf.oneHot([move.tile.value], 10).reshape([-1]).toFloat();
-                const orientation = tf.oneHot([move.orientation - 1], 4).reshape([-1]).toFloat(); // ???
+        const predictedScores = tf.tidy(() => {
+            // A list of new boards
+            const cardHisto = remainingDeck.remainingHisto();
+            const newBoards = moves.map(m => board.playMoveCopy(m));
+            const representations = newBoards.map(board => Array.from(board.heightMap.data).concat(cardHisto));
 
-                return tf.concat([localArea, tileNr, orientation]);
-            });
+            const predictedScores = self.model!.predict(tf.tensor2d(representations));
+            if (Array.isArray(predictedScores)) throw new Error('nuh-uh'); // Make type checker happy
 
-            // Will not be disposed!
-            const combinedInput = tf.stack(inputTensors);
-
-            const outputTensor = self.model!.predict(combinedInput);
-            if (Array.isArray(outputTensor)) throw new Error('nuh-uh'); // Make type checker happy
-
-            self.trainingSamples.push(tf.keep(combinedInput));
-            return outputTensor;
+            return predictedScores;
         });
 
-        // Predictions for whether or not to pick these values
-        // Value >= 0.5 == select, < 0.5 == reject
-        const decisions: boolean[] = (outputTensor as any).dataSync().map((x: number) => x >= 0.5);
-        self.decisions.push(...decisions.map(x => x ? 1 : 0));
+        const predictedScoresData = predictedScores.dataSync();
 
-        const ret = moves.filter((_, i) => decisions[i]);
+        // The values from the output tensor are the predicted scores, annotate
+        // the moves with those values.
+        const annotatedMoves = moves.map((move, i) => {
+            return { move, annotation: { predictedScore: predictedScoresData[i] }};
+        });
 
-        return ret;
+        tf.dispose(predictedScores);
+
+        return annotatedMoves;
     }
+
+    public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<N0Move> | undefined {
+        const annotatedMoves = this.selectBranches(startingBoard, moves, remainingDeck)
+                .map(m => ([m, m.annotation.predictedScore]) as ([MonteCarloMove<N0Move>, number]));
+        // Pick a move according to the predicted values
+        return weightedPick(annotatedMoves);
+    }
+
+    private async trainNetwork(root: MonteCarloTree<N0Move>, remainingDeck: Deck) {
+        if (!this.model) { throw new Error('Call initialize() first'); }
+
+        const cardHisto = remainingDeck.remainingHisto();
+
+        // At this point we pretend that the scores we found by MCTSing are the
+        // real scores. Teach them to the network.
+
+        const gameRepr = [];
+        const boardValues = [];
+
+        if (root.exploredMoves.size === 0) {
+            // Nothing to train
+            return;
+        }
+
+        for (const [move, child] of root.exploredMoves) {
+            gameRepr.push(Array.from(child.board.heightMap.data).concat(cardHisto));
+            // Take the mean of the predicated and the calculated score, so that
+            // we have some game retention.
+            boardValues.push([mean([child.meanScore, move.annotation.predictedScore])]);
+        }
+
+        console.log(`Training on ${gameRepr.length} samples`);
+        await this.saveTrainingSamples(gameRepr, boardValues);
+
+        const X = tf.tensor2d(gameRepr);
+        const Y = tf.tensor2d(boardValues);
+
+        await this.model.fit(X, Y);
+        await this.model.save(MODEL_DIR);
+
+        tf.dispose(X);
+        tf.dispose(Y);
+    }
+
+    public scoreForBoard(board: FastBoard, dnf: boolean) {
+        // Punish very badly for not finishing the board
+        if (dnf) {
+            return 0;
+        } else {
+            return board.score();
+        }
+    }
+
+    private async saveTrainingSamples(moves: number[][], values: number[][]) {
+        const dir = 'samples';
+        if (!await exists(dir)) {
+            await mkdir(dir);
+        }
+        await writeFile(`${dir}/${Date.now()}.json`, JSON.stringify({
+            moves, values
+        }), { encoding: 'utf-8' });
+    }
+}
+
+const exists = util.promisify(fs.exists);
+const mkdir = util.promisify(fs.mkdir);
+const writeFile = util.promisify(fs.writeFile);
+
+/**
+ * Move annotations
+ */
+interface N0Move {
+    predictedScore: number;
 }

@@ -15,7 +15,7 @@ export interface IPlayer {
     /**
      * Called when the player needs to make a move
      */
-    calculateMove(board: FastBoard, deck: Deck, tile: Tile): Move | undefined;
+    calculateMove(board: FastBoard, deck: Deck, tile: Tile): Promise<Move | undefined>;
 
     /**
      * Prints info about the player needed for logging
