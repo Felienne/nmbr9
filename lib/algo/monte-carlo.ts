@@ -13,6 +13,7 @@ import { Move, CandidateMove } from '../board';
  * A node in a Monte Carlo Tree
  */
 export class MonteCarloTree<M> {
+    public readonly parent?: MonteCarloTree<M>;
     public readonly board: FastBoard;
     // The tile to be played this round
     public readonly tile?: Tile;
@@ -36,7 +37,6 @@ export class MonteCarloTree<M> {
     public timesVisited: number;
     public annotation?: M;
 
-    private possibleMoveCount: number = -1;
     private support: TreeSearchSupport<M>;
 
     private initialized: boolean = false;
@@ -46,11 +46,13 @@ export class MonteCarloTree<M> {
     }
 
     constructor(
+            parent: MonteCarloTree<M> | undefined,
             board: FastBoard,
             tile:Tile | undefined,
             deck: Deck,
             support: TreeSearchSupport<M>,
             ) {
+        this.parent = parent;
         this.board = board;
 
         this.tile = tile;
@@ -89,25 +91,26 @@ export class MonteCarloTree<M> {
      * - If no "unexplored" moves, pick the explored child with the highest UCB score
      *   and recurse into that.
      */
-    public explore(): PlayoutResult {
+    public explore(): void {
         if (this.initialized === false){
             this.legalMoves = this.tile ? this.board.getLegalMoves(this.tile) : [];
-            this.possibleMoveCount = this.legalMoves.length;
             this.support.initializeNode(this)
             this.initialized = true
+
+            if (!this.support.continueExploringAfterInitialize) { return; }
         }
 
-        if (this.possibleMoveCount === 0) {
-            // This is a leaf node or all possible moves got pruned. Just return the current score.
-            return { score: this.support.scoreForBoard(this.board, !this.remainingDeck.isEmpty) };
+        if (this.legalMoves.length === 0) {
+            // This is a leaf node or there are no possible moves to play.
+            this.reportScore(this.support.scoreForBoard(this.board, this.tile !== undefined));
+            return;
         }
 
-        let result;
         if (this.unexploredMoves.length !== 0){
             const toExplore = pickAndRemove(this.unexploredMoves)!;
             const freshChild = this.addExploredNode(toExplore);
 
-            result = freshChild.randomPlayout();
+            freshChild.randomPlayout();
         } else {
             const bestChild = this.mostPromisingChild();
             if (bestChild === undefined) {
@@ -115,14 +118,10 @@ export class MonteCarloTree<M> {
                 // There are no more moves to play here, probably because the
                 // board is filled up to the brim. We score what's currently
                 // on the board.
-                return { score: this.support.scoreForBoard(this.board, true) };
+                return;
             }
-            result = bestChild.explore();
+            bestChild.explore();
         }
-
-        this.totalScore += result.score;
-        this.timesVisited += 1;
-        return result;
     }
 
     /**
@@ -136,12 +135,27 @@ export class MonteCarloTree<M> {
         const deckAfterMove = new Deck(this.remainingDeck);
         const nextTile = deckAfterMove.drawTile();
 
-        const freshChild = new MonteCarloTree(boardAfterMove, nextTile, deckAfterMove, this.support);
+        const freshChild = new MonteCarloTree(this, boardAfterMove, nextTile, deckAfterMove, this.support);
         this.exploredMoves.set(move, freshChild);
         return freshChild;
     }
 
-    private randomPlayout(): PlayoutResult {
+    /**
+     * Add a score on this node and all of its parents
+     */
+    public reportScore(score: number) {
+        let node: MonteCarloTree<M> | undefined = this;
+        while (node !== undefined) {
+            node.totalScore += score;
+            node.timesVisited += 1;
+            node = node.parent;
+        }
+    }
+
+    /**
+     * Perform a random playout starting from this node, reporting the score afterwards
+     */
+    public randomPlayout(): void {
         const playoutBoard = new FastBoard(this.board);
         const playoutDeck = new Deck(this.remainingDeck);
 
@@ -149,17 +163,14 @@ export class MonteCarloTree<M> {
         while (tile !== undefined) {
             // Random move met tile
             const move = this.support.pickRandomPlayoutMove(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck);
-
             if (move === undefined) { break; }
-            playoutBoard.playMove(move);
 
+            playoutBoard.playMove(move);
             tile = playoutDeck.drawTile();
         }
 
         const score = this.support.scoreForBoard(playoutBoard, tile !== undefined);
-        this.totalScore += score;
-        this.timesVisited += 1;
-        return { score };
+        this.reportScore(score);
     }
 
     private mostPromisingChild(): MonteCarloTree<M> | undefined {
@@ -192,6 +203,16 @@ export interface TreeSearchSupport<M> {
      * by filtering `node.legalMoves`.
      */
     initializeNode(node: MonteCarloTree<M>): void;
+
+    /**
+     * Controls whether exploration continues or stops after initializing a node
+     *
+     * If true, we'll continue exploring unexplored moves or recursing into
+     * explored children after initializing.
+     *
+     * If not, initialization is the only thing done when a node is freshly minted.
+     */
+    readonly continueExploringAfterInitialize: boolean;
 
     /**
      * Return a move to be used for a random playout

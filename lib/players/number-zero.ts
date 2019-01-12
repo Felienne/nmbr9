@@ -8,7 +8,7 @@ import { mean, weightedPick } from "../util";
 import { IPlayer } from '../player';
 import { Deck, CARD_TYPES } from '../cards';
 import { Tile } from '../tile';
-import { MonteCarloTree, performMcts, printTreeStatistics, TreeSearchSupport } from '../algo/monte-carlo';
+import { MonteCarloTree, performMcts, printTreeStatistics, TreeSearchSupport, defaultUpperConfidenceBound } from '../algo/monte-carlo';
 import { networkInterfaces } from 'os';
 import { roughFractions } from '../display';
 
@@ -47,13 +47,14 @@ export interface NumberZeroOptions {
 export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
     public readonly name: string = 'Number Zero';
 
+
     private model?: tf.Model;
 
     constructor(private readonly options: NumberZeroOptions) {
     }
 
     public async calculateMove(board: FastBoard, remainingDeck: Deck, tile: Tile): Promise<Move | undefined> {
-        const root = new MonteCarloTree(board, tile, remainingDeck, this);
+        const root = new MonteCarloTree(undefined, board, tile, remainingDeck, this);
 
         performMcts(root, this.options);
 
@@ -113,6 +114,11 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         });
     }
 
+    /**
+     * False because we treat NN predictions as random rollouts
+     */
+    public readonly continueExploringAfterInitialize = false;
+
     public initializeNode(node: MonteCarloTree<N0Annotation>): void {
         // All nodes are immediately explored, and use the NN to attach a score to it
         const children = node.legalMoves.map(move => node.addExploredNode(move));
@@ -121,28 +127,25 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         // the moves with those values.
         const scores = this.predictBoardScores(children.map(c => c.board), node.remainingDeck);
         children.forEach((child, i) => {
-            child.annotation = { predictedScore: scores[i] };
+            // We'll treat the predicted score as if it was a random rollout
+            child.reportScore(scores[i]);
         });
 
         process.stderr.write(scores.length > 0 ? roughFractions(scores) : '?');
     }
 
     public upperConfidenceBound(node: MonteCarloTree<N0Annotation>, parentVisitCount: number) {
-        const explorationFactor = 1;
+        const explorationFactor = 100;
 
-        // Treat the NN predicted score as the result of a single rollout
-        const adjustedTotal = node.totalScore + node.annotation!.predictedScore;
-        const adjustedVisits = node.timesVisited + 1;
-
-        // Use our predicted score in the UCB. Some hax in the UCB calculation to make it work
-        // with 0 visit counts.
-        return (adjustedTotal / adjustedVisits) + explorationFactor * Math.sqrt(Math.log(Math.max(1, parentVisitCount)) / adjustedVisits);
+        return defaultUpperConfidenceBound(node, parentVisitCount, explorationFactor);
     }
 
     public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined {
+        const baseWeight = 5; // Some additional selection noise to prevent moves from starving
+
         const boards = moves.map(move => startingBoard.playMoveCopy(move));
         const scores = this.predictBoardScores(boards, remainingDeck);
-        const annotatedMoves = scores.map((score, i) => ([moves[i], score]) as ([CandidateMove, number]));
+        const annotatedMoves = scores.map((score, i) => ([moves[i], score + baseWeight]) as ([CandidateMove, number]));
 
         // Pick a move according to the predicted values
         return weightedPick(annotatedMoves);
@@ -182,11 +185,13 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         const boardValues = [];
 
         for (const child of root.exploredMoves.values()) {
-            if (child.timesVisited > 0) {
+            // Every node will have a visitcount of 1, but we only want to train
+            // on nodes that have had additional exploration.
+            if (child.timesVisited > 1) {
                 gameRepr.push(Array.from(child.board.heightMap.data).concat(cardHisto));
                 // Take the mean of the predicated and the calculated score, so that
                 // we have some game retention.
-                boardValues.push([mean([child.meanScore, child.annotation!.predictedScore])]);
+                boardValues.push([child.meanScore]);
             }
         }
 

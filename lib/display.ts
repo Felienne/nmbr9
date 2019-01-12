@@ -59,15 +59,16 @@ export const TILE_COLORS = [
 ];
 
 
+const BARCHARS = '▁▂▃▄▅▆▇█';
+
 /**
  * Represent a fraction roughly as a character
  */
 export function roughFraction(x: number) {
-    const chars = '▁▂▃▄▅▆▇█';
-    if (x < 0.001) { return ' '; }
-    if (x >= 0.99) { return chars[chars.length - 1]; }
+    if (x < 0.001) { return '_'; }
+    if (x >= 0.99) { return BARCHARS[BARCHARS.length - 1]; }
     const i = Math.floor(x / 0.125);
-    return chars[i];
+    return BARCHARS[i];
 }
 
 export function roughFractions(xs: number[]): string {

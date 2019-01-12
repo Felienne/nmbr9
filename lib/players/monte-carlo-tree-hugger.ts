@@ -60,6 +60,11 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
         }
     }
 
+    /**
+     * True because we have unexplored moves
+     */
+    public readonly continueExploringAfterInitialize = true;
+
     initializeNode(node: MonteCarloTree<any>): void {
         node.unexploredMoves = this.selectBranches(node.board, node.legalMoves)
     }
@@ -70,7 +75,7 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
     }
 
     public async calculateMove(board: FastBoard, deck:Deck, tile: Tile): Promise<Move | undefined> {
-        const root = new MonteCarloTree(board, tile, deck, this);
+        const root = new MonteCarloTree(undefined, board, tile, deck, this);
 
         performMcts(root, this.options);
 
