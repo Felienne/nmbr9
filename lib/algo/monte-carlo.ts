@@ -6,16 +6,6 @@ import { Deck } from '../cards';
 import { Move, CandidateMove } from '../board';
 
 /**
- * A move in the monte carlo tree
- *
- * It's a CandidateMove with additional data of some type.
- */
-export interface MonteCarloMove<M> {
-    move: CandidateMove;
-    annotation: M;
-}
-
-/**
  * An implementation of MCTS for Nmbr9
  */
 
@@ -32,20 +22,21 @@ export class MonteCarloTree<M> {
     /**
      * "Children" are explored submoves
      */
-    public readonly exploredMoves = new Map<MonteCarloMove<M>, MonteCarloTree<M>>();
+    public readonly exploredMoves = new Map<CandidateMove, MonteCarloTree<M>>();
 
     /**
      * Moves yet to explore
      */
-    public unexploredMoves: MonteCarloMove<M>[] = [];
+    public unexploredMoves: CandidateMove[] = [];
 
-    public readonly legalMoves: CandidateMove[];
+    public legalMoves: CandidateMove[] = [];
 
     // The scoring statistics for this node and all of its children
     public totalScore: number;
     public timesVisited: number;
+    public annotation?: M;
 
-    private possibleMoveCount: number;
+    private possibleMoveCount: number = -1;
     private support: TreeSearchSupport<M>;
 
     private initialized: boolean = false;
@@ -61,20 +52,13 @@ export class MonteCarloTree<M> {
             support: TreeSearchSupport<M>,
             ) {
         this.board = board;
+
         this.tile = tile;
         this.remainingDeck =  deck;
         this.support = support;
 
         this.totalScore = 0;
         this.timesVisited = 0;
-
-        if (tile) {
-            this.legalMoves = board.getLegalMoves(tile)
-        } else {
-            this.legalMoves = [];
-        }
-
-        this.possibleMoveCount = this.legalMoves.length;
     }
 
     public bestMove(){
@@ -96,8 +80,19 @@ export class MonteCarloTree<M> {
         return bestMove;
     }
 
+    /**
+     * Explore node
+     *
+     * Works in one of two modes:
+     *
+     * - If there are "unexplored" moves, pick one of those and do a random rollout.
+     * - If no "unexplored" moves, pick the explored child with the highest UCB score
+     *   and recurse into that.
+     */
     public explore(): PlayoutResult {
         if (this.initialized === false){
+            this.legalMoves = this.tile ? this.board.getLegalMoves(this.tile) : [];
+            this.possibleMoveCount = this.legalMoves.length;
             this.support.initializeNode(this)
             this.initialized = true
         }
@@ -110,18 +105,7 @@ export class MonteCarloTree<M> {
         let result;
         if (this.unexploredMoves.length !== 0){
             const toExplore = pickAndRemove(this.unexploredMoves)!;
-            const boardAfterMove = new FastBoard(this.board);
-            boardAfterMove.place(this.tile!, toExplore.move);
-
-            // Determine the next tile to be played, and what's left becomes the
-            // Deck.
-            // TODO: Our life would be sooooooooo much easier if Deck was all the
-            // tiles with a '.currentTile' accessor (or something)
-            const deckAfterMove = new Deck(this.remainingDeck);
-            const nextTile = deckAfterMove.drawTile();
-
-            const freshChild = new MonteCarloTree(boardAfterMove, nextTile, deckAfterMove, this.support);
-            this.exploredMoves.set(toExplore, freshChild);
+            const freshChild = this.addExploredNode(toExplore);
 
             result = freshChild.randomPlayout();
         } else {
@@ -141,6 +125,22 @@ export class MonteCarloTree<M> {
         return result;
     }
 
+    /**
+     * Add a child node for the given move
+     */
+    public addExploredNode(move: CandidateMove): MonteCarloTree<M> {
+        // What's left becomes the Deck.
+        // TODO: Our life would be sooooooooo much easier if Deck was all the
+        // tiles with a '.currentTile' accessor (or something)
+        const boardAfterMove = this.board.playMoveCopy(move);
+        const deckAfterMove = new Deck(this.remainingDeck);
+        const nextTile = deckAfterMove.drawTile();
+
+        const freshChild = new MonteCarloTree(boardAfterMove, nextTile, deckAfterMove, this.support);
+        this.exploredMoves.set(move, freshChild);
+        return freshChild;
+    }
+
     private randomPlayout(): PlayoutResult {
         const playoutBoard = new FastBoard(this.board);
         const playoutDeck = new Deck(this.remainingDeck);
@@ -151,7 +151,7 @@ export class MonteCarloTree<M> {
             const move = this.support.pickRandomPlayoutMove(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck);
 
             if (move === undefined) { break; }
-            playoutBoard.playMove(move.move);
+            playoutBoard.playMove(move);
 
             tile = playoutDeck.drawTile();
         }
@@ -167,26 +167,13 @@ export class MonteCarloTree<M> {
         let bestChild: MonteCarloTree<M> | undefined;
         for (const child of this.exploredMoves.values()) {
             const ucb = this.support.upperConfidenceBound(child, this.timesVisited);
+            if (isNaN(ucb)) { throw new Error('UCB returned NaN'); }
             if (ucb >= maximumUCB) {
                 maximumUCB = ucb;
                 bestChild = child;
             }
         }
         return bestChild!;
-    }
-
-    private filterAcceptableMoves(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<M>[] {
-        if (moves.length === 0) { return []; }
-
-        const makeMutable = startingBoard.makeImmutable();
-        try {
-            const acceptableMoves = this.support.selectBranches(startingBoard, moves, remainingDeck);
-            process.stderr.write(roughFraction(acceptableMoves.length / moves.length));
-            // If this returns nothing, we're effed.
-            return acceptableMoves;
-        } finally {
-            makeMutable();
-        }
     }
 }
 
@@ -198,17 +185,18 @@ export interface PlayoutResult {
  * Callbacks that the MCTS uses to do its work
  */
 export interface TreeSearchSupport<M> {
-    initializeNode(node:MonteCarloTree<M>): void;
-
     /**
-     * Restrict the search of a given node to a set of possible moves
+     * Called exactly once on every node
+     *
+     * Should populate either `node.unexploredMoves` or `node.exploredMoves`, potentially
+     * by filtering `node.legalMoves`.
      */
-    selectBranches(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<M>[];
+    initializeNode(node: MonteCarloTree<M>): void;
 
     /**
      * Return a move to be used for a random playout
      */
-    pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<M> | undefined;
+    pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined;
 
     /**
      * Return the score for a given board

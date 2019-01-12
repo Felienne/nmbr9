@@ -4,7 +4,7 @@ import { IPlayer } from "../player";
 import { pick, pickAndRemove, mean, sum } from '../util';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
-import { MonteCarloTree, printTreeStatistics, performMcts, MonteCarloMove, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
+import { MonteCarloTree, printTreeStatistics, performMcts, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
@@ -78,8 +78,7 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
             printTreeStatistics(root);
         }
 
-        const bestMove = root.bestMove();
-        return bestMove && bestMove.move;
+        return root.bestMove();
     }
 
     public printIterationsAndSelector(){
@@ -92,9 +91,8 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
     /**
      * Called by the Tree Search to prune the game tree
      */
-    public selectBranches(board: FastBoard, moves: CandidateMove[]): MonteCarloMove<undefined>[] {
-        const selectedMoves = this.options.branchSelector ? this.options.branchSelector(board, moves) : moves;
-        return selectedMoves.map(move => ({ move, annotation: undefined }));
+    public selectBranches(board: FastBoard, moves: CandidateMove[]): CandidateMove[] {
+        return this.options.branchSelector ? this.options.branchSelector(board, moves) : moves;
     }
 
     /**
@@ -102,7 +100,7 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
      *
      * We do a purely random selection from all acceptable moves
      */
-    public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<undefined> | undefined {
+    public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined {
         const acceptableMoves = this.selectBranches(startingBoard, moves);
         return pick(acceptableMoves);
     }

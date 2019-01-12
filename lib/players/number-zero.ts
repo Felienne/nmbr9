@@ -8,8 +8,9 @@ import { mean, weightedPick } from "../util";
 import { IPlayer } from '../player';
 import { Deck, CARD_TYPES } from '../cards';
 import { Tile } from '../tile';
-import { MonteCarloTree, performMcts, printTreeStatistics, MonteCarloMove, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
+import { MonteCarloTree, performMcts, printTreeStatistics, TreeSearchSupport } from '../algo/monte-carlo';
 import { networkInterfaces } from 'os';
+import { roughFractions } from '../display';
 
 const MODEL_DIR = 'file://numberzero.model';
 
@@ -43,12 +44,7 @@ export interface NumberZeroOptions {
  * Height map of entire board, plus a vector to indicate which tiles
  * are still left.
  */
-export class NumberZero implements IPlayer, TreeSearchSupport<N0Move> {
-    
-    initializeNode(node: MonteCarloTree<N0Move>): void {
-        node.unexploredMoves = this.selectBranches(node.board, node.legalMoves, node.remainingDeck);
-    }
-
+export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
     public readonly name: string = 'Number Zero';
 
     private model?: tf.Model;
@@ -67,19 +63,11 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Move> {
 
         await this.trainNetwork(root, remainingDeck);
 
-        const bestMove = root.bestMove();
-        return bestMove && bestMove.move;
+        return root.bestMove();
     }
 
     public printIterationsAndSelector(): string {
         return '';
-    }
-
-    public upperConfidenceBound(node: MonteCarloTree<N0Move>, parentVisitCount: number) {
-        const explorationFactor = 1;
-        // We have a slighly modified UCB; incorporate the predicted value with
-        // weight 1.
-        return node.meanScore + explorationFactor * Math.sqrt(Math.log(parentVisitCount) / node.timesVisited);
     }
 
     /**
@@ -125,22 +113,51 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Move> {
         });
     }
 
-    public async gameFinished(board: FastBoard): Promise<void> {
+    public initializeNode(node: MonteCarloTree<N0Annotation>): void {
+        // All nodes are immediately explored, and use the NN to attach a score to it
+        const children = node.legalMoves.map(move => node.addExploredNode(move));
+
+        // The values from the output tensor are the predicted scores, annotate
+        // the moves with those values.
+        const scores = this.predictBoardScores(children.map(c => c.board), node.remainingDeck);
+        children.forEach((child, i) => {
+            child.annotation = { predictedScore: scores[i] };
+        });
+
+        process.stderr.write(scores.length > 0 ? roughFractions(scores) : '?');
     }
 
-    /**
-     * Return all branches, but annotate them with a predicted score.
-     */
-    public selectBranches(board: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<N0Move>[] {
+    public upperConfidenceBound(node: MonteCarloTree<N0Annotation>, parentVisitCount: number) {
+        const explorationFactor = 1;
+
+        // Treat the NN predicted score as the result of a single rollout
+        const adjustedTotal = node.totalScore + node.annotation!.predictedScore;
+        const adjustedVisits = node.timesVisited + 1;
+
+        // Use our predicted score in the UCB. Some hax in the UCB calculation to make it work
+        // with 0 visit counts.
+        return (adjustedTotal / adjustedVisits) + explorationFactor * Math.sqrt(Math.log(Math.max(1, parentVisitCount)) / adjustedVisits);
+    }
+
+    public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined {
+        const boards = moves.map(move => startingBoard.playMoveCopy(move));
+        const scores = this.predictBoardScores(boards, remainingDeck);
+        const annotatedMoves = scores.map((score, i) => ([moves[i], score]) as ([CandidateMove, number]));
+
+        // Pick a move according to the predicted values
+        return weightedPick(annotatedMoves);
+    }
+
+    private predictBoardScores(boards: FastBoard[], remainingDeck: Deck): number[] {
         if (!this.model) { throw new Error('Call initialize() first'); }
-        if (moves.length === 0) { return []; }
         const self = this;
 
+        if (boards.length === 0) { return []; }
+
+        const cardHisto = remainingDeck.remainingHisto();
+
         const predictedScores = tf.tidy(() => {
-            // A list of new boards
-            const cardHisto = remainingDeck.remainingHisto();
-            const newBoards = moves.map(m => board.playMoveCopy(m));
-            const representations = newBoards.map(board => Array.from(board.heightMap.data).concat(cardHisto));
+            const representations = boards.map(board => Array.from(board.heightMap.data).concat(cardHisto));
 
             const predictedScores = self.model!.predict(tf.tensor2d(representations));
             if (Array.isArray(predictedScores)) throw new Error('nuh-uh'); // Make type checker happy
@@ -148,27 +165,12 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Move> {
             return predictedScores;
         });
 
-        const predictedScoresData = predictedScores.dataSync();
-
-        // The values from the output tensor are the predicted scores, annotate
-        // the moves with those values.
-        const annotatedMoves = moves.map((move, i) => {
-            return { move, annotation: { predictedScore: predictedScoresData[i] }};
-        });
-
+        const ret = Array.from(predictedScores.dataSync());
         tf.dispose(predictedScores);
-
-        return annotatedMoves;
+        return ret;
     }
 
-    public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): MonteCarloMove<N0Move> | undefined {
-        const annotatedMoves = this.selectBranches(startingBoard, moves, remainingDeck)
-                .map(m => ([m, m.annotation.predictedScore]) as ([MonteCarloMove<N0Move>, number]));
-        // Pick a move according to the predicted values
-        return weightedPick(annotatedMoves);
-    }
-
-    private async trainNetwork(root: MonteCarloTree<N0Move>, remainingDeck: Deck) {
+    private async trainNetwork(root: MonteCarloTree<N0Annotation>, remainingDeck: Deck) {
         if (!this.model) { throw new Error('Call initialize() first'); }
 
         const cardHisto = remainingDeck.remainingHisto();
@@ -179,16 +181,17 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Move> {
         const gameRepr = [];
         const boardValues = [];
 
-        if (root.exploredMoves.size === 0) {
-            // Nothing to train
-            return;
+        for (const child of root.exploredMoves.values()) {
+            if (child.timesVisited > 0) {
+                gameRepr.push(Array.from(child.board.heightMap.data).concat(cardHisto));
+                // Take the mean of the predicated and the calculated score, so that
+                // we have some game retention.
+                boardValues.push([mean([child.meanScore, child.annotation!.predictedScore])]);
+            }
         }
 
-        for (const [move, child] of root.exploredMoves) {
-            gameRepr.push(Array.from(child.board.heightMap.data).concat(cardHisto));
-            // Take the mean of the predicated and the calculated score, so that
-            // we have some game retention.
-            boardValues.push([mean([child.meanScore, move.annotation.predictedScore])]);
+        if (gameRepr.length === 0) {
+            return; // Nothing to train
         }
 
         console.log(`Training on ${gameRepr.length} samples`);
@@ -213,6 +216,9 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Move> {
         }
     }
 
+    public async gameFinished(board: FastBoard): Promise<void> {
+    }
+
     private async saveTrainingSamples(moves: number[][], values: number[][]) {
         const dir = 'samples';
         if (!await exists(dir)) {
@@ -231,6 +237,6 @@ const writeFile = util.promisify(fs.writeFile);
 /**
  * Move annotations
  */
-interface N0Move {
+interface N0Annotation {
     predictedScore: number;
 }

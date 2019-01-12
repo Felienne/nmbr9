@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-import { range } from "./util";
+import { range, sum } from "./util";
 import { Move, Orientation } from "./board";
 import util = require('util');
 import { zip } from "@tensorflow/tfjs-data";
@@ -64,8 +64,13 @@ export const TILE_COLORS = [
  */
 export function roughFraction(x: number) {
     const chars = '▁▂▃▄▅▆▇█';
-    if (x < 0.01) { return '∅'; }
+    if (x < 0.001) { return ' '; }
     if (x >= 0.99) { return chars[chars.length - 1]; }
     const i = Math.floor(x / 0.125);
     return chars[i];
+}
+
+export function roughFractions(xs: number[]): string {
+    const total = sum(xs);
+    return xs.map(c => roughFraction(c / total)).join('');
 }
