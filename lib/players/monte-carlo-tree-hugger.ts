@@ -5,6 +5,7 @@ import { pick, pickAndRemove, mean, sum } from '../util';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
 import { MonteCarloTree, printTreeStatistics, performMcts, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
+import { checkPoolMode } from '@tensorflow/tfjs-layers/dist/common';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
@@ -63,15 +64,19 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
     /**
      * True because we have unexplored moves
      */
-    public readonly continueExploringAfterInitialize = true;
+    public readonly continueExploringAfterInitialize = false;
 
     initializeNode(node: MonteCarloTree<any>): void {
-        node.unexploredMoves = this.selectBranches(node.board, node.legalMoves)
+        for (const move of this.selectBranches(node.board, node.legalMoves)){
+            const child = node.addExploredNode(move)
+            const score = child.randomPlayout();
+        }
     }
 
     public upperConfidenceBound(node: MonteCarloTree<any>, parentVisitCount: number) {
+        //magic Twiddly factor
         const explorationFactor = 100;
-        return defaultUpperConfidenceBound(node, parentVisitCount, explorationFactor);
+        return defaultUpperConfidenceBound(node, Math.max(1,parentVisitCount), explorationFactor);
     }
 
     public async calculateMove(board: FastBoard, deck:Deck, tile: Tile): Promise<Move | undefined> {

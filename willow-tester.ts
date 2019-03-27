@@ -25,7 +25,13 @@ function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMov
     function boundingBoxForThisMove(move:CandidateMove){
         const board = new FastBoard(startingBoard);
         board.playMove(move);
-        return board.sizeOfBoundingBox(1);
+        return board.sizeOfBoundingBox(move.targetLevel);
+    }
+
+    function boundingBoxShapeForThisMove(move:CandidateMove){
+        const board = new FastBoard(startingBoard);
+        board.playMove(move);
+        return Math.abs(1-board.shapeOfBoundingBox(move.targetLevel));
     }
 
     const allHoles = moves.map(numberOfHolesForThisMove);
@@ -39,26 +45,36 @@ function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMov
     const minBoundingBox = Math.min(...allBoundingBoxes)
 
     const ret2 = ret.filter((move,i) => { 
-        return allBoundingBoxes[i] <= minBoundingBox + 5 
+        return allBoundingBoxes[i] <= minBoundingBox + 5
     })
 
-    return ret2;
+    //kijk ook naar de 'vierkantste' vorm
+    const allBoundingBoxesShapes = ret.map(boundingBoxShapeForThisMove);
+    const minBoundingBoxShape = Math.min(...allBoundingBoxesShapes)
+    //console.log(minBoundingBoxShape)
+
+    const ret3 = ret2.filter((move,i) => { 
+        return allBoundingBoxesShapes[i] <= minBoundingBoxShape + 0.5
+    })
+
+    return ret3;
 
 }
 
 
 function boardCalculator(board: FastBoard):number{
 
-    return board.score()*2;
+
+    return board.score();
 }
 
 async function main() {
     const player = new MonteCarloTreePlayer({
         // Iterations so we don't depend on CPU speed for results
-        maxIterations: 5000,
+        maxIterations: 1000,
         printTreeStatistics: true,
         boardScoreCalculator: boardCalculator,
-        branchSelectorString: 'min holes targetlevel + 3 and min boundingbox + 5',
+        branchSelectorString: 'min holes targetlevel + 3 and min boundingbox + 5 + min shape + 0.5',
         boardScoreCalculatorString: 'board.score',
         branchSelector: selector
     });

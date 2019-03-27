@@ -48,7 +48,7 @@ function boardCalculator(board: FastBoard):number{
 const game = new Game([
     //new RandomPlayer(),
     new MonteCarloTreePlayer({
-        maxIterations: 1000,
+        maxIterations: 10,
         printTreeStatistics: true,
         boardScoreCalculator: boardCalculator,
         branchSelector: selector,

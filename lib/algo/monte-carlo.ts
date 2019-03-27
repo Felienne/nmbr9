@@ -288,7 +288,10 @@ export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
     while ((maxIterations === undefined || i < maxIterations)
             && (deadline === undefined || Date.now() <= deadline)) {
         root.explore();
-        process.stderr.write('·');
+        if (i%10===0){
+            process.stderr.write('·');
+        }
+
         i += 1;
     }
 
