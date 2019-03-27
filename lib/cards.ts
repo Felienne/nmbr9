@@ -1,6 +1,6 @@
 import { Tile } from "./tile";
 
-export const CARD_TYPES = 10;
+export const CARD_TYPES = 20;
 
 export interface tuple {
     turn: number;
@@ -39,10 +39,18 @@ export class Deck {
         return this.allcards.length === 0;
     }
 
+    /**
+     * Turn the remaining cards into a histogram
+     */
     public remainingHisto(): number[] {
         const ret = new Array(CARD_TYPES).fill(0);
         for (const card of this.allcards) {
-            ret[card]++;
+            const index1 = card * 2;
+            if (ret[index1] === 0) {
+                ret[index1] = 1;
+            } else {
+                ret[index1 + 1] = 1;
+            }
         }
         return ret;
     }
