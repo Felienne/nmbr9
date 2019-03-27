@@ -34,6 +34,7 @@ export class MonteCarloTree<M> {
 
     // The scoring statistics for this node and all of its children
     public totalScore: number;
+    public maxScore: number = 0;
     public timesVisited: number;
     public annotation?: M;
 
@@ -120,6 +121,8 @@ export class MonteCarloTree<M> {
                 // on the board.
                 return;
             }
+            // Collect more stats
+            bestChild.randomPlayout();
             bestChild.explore();
         }
     }
@@ -147,6 +150,9 @@ export class MonteCarloTree<M> {
         let node: MonteCarloTree<M> | undefined = this;
         while (node !== undefined) {
             node.totalScore += score;
+            if (score > node.maxScore) {
+                node.maxScore = score;
+            }
             node.timesVisited += 1;
             node = node.parent;
         }
@@ -163,7 +169,9 @@ export class MonteCarloTree<M> {
         while (tile !== undefined) {
             // Random move met tile
             const move = this.support.pickRandomPlayoutMove(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck);
-            if (move === undefined) { break; }
+            if (move === undefined) {
+                break;
+            }
 
             playoutBoard.playMove(move);
             tile = playoutDeck.drawTile();
@@ -279,19 +287,21 @@ export interface MctsOptions {
  * Perform MCTS search
  */
 export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
-    process.stderr.write('>');
-
     const deadline = options.maxThinkingTimeSec !== undefined ? Date.now() + options.maxThinkingTimeSec * 1000 : undefined;
     const maxIterations = options.maxIterations;
 
     let i = 0;
     while ((maxIterations === undefined || i < maxIterations)
             && (deadline === undefined || Date.now() <= deadline)) {
+        process.stderr.write(i === 0 ? '>' : '·');
         root.explore();
+<<<<<<< HEAD
         if (i%10===0){
             process.stderr.write('·');
         }
 
+=======
+>>>>>>> 17e3d6f856fd116875963fe1c64cd7a7968998ba
         i += 1;
     }
 

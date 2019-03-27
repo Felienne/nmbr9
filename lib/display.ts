@@ -65,13 +65,16 @@ const BARCHARS = '▁▂▃▄▅▆▇█';
  * Represent a fraction roughly as a character
  */
 export function roughFraction(x: number) {
-    if (x < 0.001) { return '_'; }
+    if (x < 0.001) { return '⢀'; }
     if (x >= 0.99) { return BARCHARS[BARCHARS.length - 1]; }
     const i = Math.floor(x / 0.125);
     return BARCHARS[i];
 }
 
-export function roughFractions(xs: number[]): string {
-    const total = sum(xs);
-    return xs.map(c => roughFraction(c / total)).join('');
+export function distribution(xs: number[]): string {
+    const lowest = Math.min(...xs);
+    let highest = Math.max(...xs);
+    if (highest === 0) { highest = 1; }
+    const distr = xs.map(c => roughFraction(c / highest)).join('');
+    return `[${lowest.toFixed(1)} ${distr} ${highest.toFixed(1)}]`;
 }
