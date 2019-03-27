@@ -1,11 +1,8 @@
 import { Tile } from "./tile";
+import { randInt } from "./util";
+import { shuffle } from "@tensorflow/tfjs-core/dist/util";
 
 export const CARD_TYPES = 20;
-
-export interface tuple {
-    turn: number;
-    value: number;
-}
 
 export class Deck {
     /**
@@ -13,30 +10,29 @@ export class Deck {
      */
     public static fixedDeck(cardValues: number[]) {
         const ret = new Deck();
-        ret.allcards = cardValues;
-        ret.cardOrder = cardValues;
+        ret.remainingCards = cardValues.map((v, i) => new Tile(v, i));
         return ret;
     }
 
-    private allcards:number[];
-    private index:number;
-    public cardOrder:number[]=[];
+    public static standardDeck(): Deck {
+        const values = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9];
+        return Deck.fixedDeck(values).shuffle();
+    }
 
-    public constructor(d?:Deck)
+    public remainingCards: Tile[];
+
+    public constructor(d?: Deck)
     {
-        if (d === undefined){
-            this.index = 0;
-            this.allcards = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9];
-            this.shuffle()
+        if (d === undefined) {
+            this.remainingCards = [];
         }
-        else{
-            this.index = d.index;
-            this.allcards = d.allcards.slice();
+        else {
+            this.remainingCards = d.remainingCards.slice();
         }
     }
 
     public get isEmpty(): boolean {
-        return this.allcards.length === 0;
+        return this.remainingCards.length === 0;
     }
 
     /**
@@ -44,56 +40,34 @@ export class Deck {
      */
     public remainingHisto(): number[] {
         const ret = new Array(CARD_TYPES).fill(0);
-        for (const card of this.allcards) {
-            const index1 = card * 2;
-            if (ret[index1] === 0) {
-                ret[index1] = 1;
-            } else {
-                ret[index1 + 1] = 1;
-            }
+        for (const tile of this.remainingCards) {
+            ret[tile.value] += 1;
         }
         return ret;
     }
 
-    private shuffle():void
-    {
-        for (let i = this.allcards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [this.allcards[i], this.allcards[j]] = [this.allcards[j], this.allcards[i]];
-        }
-        this.cardOrder = this.allcards.slice();
+    public draw(): Tile | undefined {
+        return this.remainingCards.pop();
     }
 
-    public draw():tuple|false
-    {
-        this.index++;
-        if (this.allcards.length === 0){
-            return false
-        }
-        else{
-            const returnValue = this.allcards.pop();
-            return { turn: this.index, value: returnValue! };
-        }
+    /**
+     * Card values remaining in the deck
+     */
+    public get cardValues(): number[] {
+        return this.remainingCards.map(c => c.value);
     }
 
-    public drawTile():Tile|undefined{
-        const drawnCard = this.draw();
-        if (drawnCard === false) {
-            return undefined;
-        }
-
-        const { turn, value }  = drawnCard;
-        const t = new Tile(value, turn);
-        return t;
+    public copy(): Deck {
+        return new Deck(this);
     }
 
-
-
-    public remainingCards(){
-        return this.allcards;
+    public shuffle(): Deck{
+        const ret = new Deck(this);
+        shuffle(ret.remainingCards);
+        return ret;
     }
+}
 
-    public copy():Deck{
-        return new Deck(this); //constructor with argument creates copy
-    }
+function swap<T>(xs: T[], i: number, j: number) {
+    [xs[i], xs[j]] = [xs[j], xs[i]];
 }

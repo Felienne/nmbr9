@@ -129,7 +129,7 @@ export class FastBoard {
 
         // Make sure that we don't fail our calculation down the line
         // if tile.turn ends up unset
-        if (isNaN(tile.turn)) tile.turn = 1;
+        if (isNaN(tile.id)) tile.id = 1;
 
         const ixes = this.positionsToIndexes(tile.getOnes(place.orientation), place);
         for (const i of ixes) {
@@ -140,7 +140,7 @@ export class FastBoard {
             this.heightMap.data[i] = newLevel;
 
             // Encode both turn and value in the same byte
-            this.tileMap.data[i] = tile.turn * 10 + tile.value;
+            this.tileMap.data[i] = tile.id * 10 + tile.value;
         }
 
         const level = this.heightMap.data[ixes[0]];
@@ -325,8 +325,8 @@ export class FastBoard {
                         if (x < minx) minx = x;
                         if (y < miny) miny = y;
                         if (x > maxx) maxx = x;
-                        if (y > maxy) maxy = y;                       
-                    } 
+                        if (y > maxy) maxy = y;
+                    }
                 };
             }
         const ratio = (maxx-minx)/(maxy-miny);
@@ -356,8 +356,8 @@ export class FastBoard {
                         if (x < minx) minx = x;
                         if (y < miny) miny = y;
                         if (x > maxx) maxx = x;
-                        if (y > maxy) maxy = y;                       
-                    } 
+                        if (y > maxy) maxy = y;
+                    }
                 };
             }
         const ret = (maxx-minx) * (maxy-miny)

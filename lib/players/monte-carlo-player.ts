@@ -48,16 +48,16 @@ export class MonteCarloPlayer implements IPlayer {
 
         //nu gaan we voor deze plaatsing een aantal mogelijke trekkingen proberen
         for (const i of range(maxNumberofTries)){
-            const tryDeck = new Deck(deck);
+            const tryDeck = deck.shuffle();
             const tryBoard = new FastBoard(board);
 
-            let drawnTile = tryDeck.drawTile();
+            let drawnTile = tryDeck.draw();
             while (drawnTile !== undefined) {
                 const move = pick(tryBoard.getLegalMoves(drawnTile));
                 if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
                 tryBoard.place(drawnTile, move);
 
-                drawnTile = tryDeck.drawTile();
+                drawnTile = tryDeck.draw();
             }
 
             if (tryBoard.score() > maxScore){

@@ -14,14 +14,12 @@ const getOnesCache:{[key:string]:Point[]} = {};
 export class Tile {
     public value: number;
     public form: number[][];
-    public turn: number;     // turn represents at which turn this tile is used. This is important to be able to distinguish between different instances
-                             // of the same number, since it is not allowed to place a tile on one instance.
-                             // since there is only one tile per turn, this serves as identity
+    public id: number;    // Must be different for every Tile
 
-    constructor(value: number, turn:number){
+    constructor(value: number, id: number) {
         this.value = value;
         this.form = getForm(value);
-        this.turn = turn;
+        this.id = id;
     }
 
     public getOnes(d:Orientation){
@@ -31,7 +29,6 @@ export class Tile {
     public getAdjacencies(d:Orientation) {
         return this.getNumberLocations(v, d);
     }
-
 
     private getNumberLocations(num: number, d:Orientation){
         const key = [this.value, num, d].toString();

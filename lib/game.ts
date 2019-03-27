@@ -16,7 +16,7 @@ export class Game {
     private readonly players: PlayerState[];
 
     constructor(players: IPlayer[]) {
-        this.deck = new Deck();
+        this.deck = Deck.standardDeck();
         this.players = players.map(player => ({
             logic: player,
             disqualified: false,
@@ -29,12 +29,12 @@ export class Game {
      * Play the whole game
      */
     public async play() {
-        let drawnCard = this.deck.draw();
-        while (drawnCard !== false) {
-            const { turn, value }  = drawnCard;
-
-            const tile = new Tile(value, turn);
-            console.log("Turn:", turn, " | Tile:", value);
+        let turn = 0;
+        let drawnTile = this.deck.draw();
+        while (drawnTile !== undefined) {
+            const tile = drawnTile;
+            turn += 1;
+            console.log("Turn:", turn, " | Tile:", tile.value);
 
             // Give all non-disqualified players a chance to move
             for (const player of this.players) {
@@ -43,8 +43,8 @@ export class Game {
                 player.timer.start();
 
                 try {
-                    //speler krijgt een kopie van het bord en het deck, anders kan hij het stiekem aanpassen!
-                    const copiedDeck = new Deck(this.deck);
+                    // speler krijgt een kopie van het bord en het deck, anders kan hij het stiekem aanpassen!
+                    const copiedDeck = this.deck.shuffle();
                     const copiedBoard = new FastBoard(player.board);
 
                     const move = await player.logic.calculateMove(copiedBoard, copiedDeck, tile);
@@ -64,7 +64,7 @@ export class Game {
                 }
             }
 
-            drawnCard = this.deck.draw();
+            drawnTile = this.deck.draw();
         }
 
         // Game done

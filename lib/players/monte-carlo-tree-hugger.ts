@@ -1,11 +1,10 @@
 import { Move, CandidateMove } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
-import { pick, pickAndRemove, mean, sum } from '../util';
+import { pick } from '../util';
 import { Deck } from '../cards';
 import { FastBoard } from '../fast-board';
 import { MonteCarloTree, printTreeStatistics, performMcts, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
-import { checkPoolMode } from '@tensorflow/tfjs-layers/dist/common';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.

@@ -135,8 +135,8 @@ export class MonteCarloTree<M> {
         // TODO: Our life would be sooooooooo much easier if Deck was all the
         // tiles with a '.currentTile' accessor (or something)
         const boardAfterMove = this.board.playMoveCopy(move);
-        const deckAfterMove = new Deck(this.remainingDeck);
-        const nextTile = deckAfterMove.drawTile();
+        const deckAfterMove = this.remainingDeck.shuffle();
+        const nextTile = deckAfterMove.draw();
 
         const freshChild = new MonteCarloTree(this, boardAfterMove, nextTile, deckAfterMove, this.support);
         this.exploredMoves.set(move, freshChild);
@@ -163,7 +163,7 @@ export class MonteCarloTree<M> {
      */
     public randomPlayout(): void {
         const playoutBoard = new FastBoard(this.board);
-        const playoutDeck = new Deck(this.remainingDeck);
+        const playoutDeck = this.remainingDeck.shuffle();
 
         let tile = this.tile;
         while (tile !== undefined) {
@@ -174,7 +174,7 @@ export class MonteCarloTree<M> {
             }
 
             playoutBoard.playMove(move);
-            tile = playoutDeck.drawTile();
+            tile = playoutDeck.draw();
         }
 
         const score = this.support.scoreForBoard(playoutBoard, tile !== undefined);

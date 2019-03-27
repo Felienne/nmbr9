@@ -33,10 +33,10 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
     const ret = new Array<number | undefined>();
 
     for (let i = 0; i < times; i++) {
-        const deck = new Deck(sourceDeck);
+        const deck = sourceDeck.shuffle();
         const board = new FastBoard();
 
-        let tile = deck.drawTile();
+        let tile = deck.draw();
         while (tile !== undefined) {
             const move = await player.calculateMove(board, deck, tile);
             if (move === undefined) {
@@ -55,7 +55,7 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
             }
             board.place(tile, move);
 
-            tile = deck.drawTile();
+            tile = deck.draw();
         }
 
         console.log(`Deck played ${i+1} out of ${times} times`)
@@ -70,6 +70,8 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
 }
 
 export async function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: number=1){
+    const startingDeck = sourceDeck.copy();
+
     function filterNotUndefined(y:(number|undefined)[]):number[]{
         const ret:number[] = [];
         y.forEach(x => {
@@ -86,7 +88,7 @@ export async function playFixedDeck(player: IPlayer, sourceDeck: Deck, times: nu
     //.filter(x => x !== undefined) does not make the typechecker happy :/
     const fails = scores_of_this_deck.splice(0).filter(x => x === undefined).length;
 
-    const stat:string = `[${sourceDeck.cardOrder}], ${times}, ${fails}, ${mean(valid_scores)}, ${standardDeviation(valid_scores)}, ${player.printIterationsAndSelector()}`;
+    const stat:string = `[${startingDeck.cardValues}], ${times}, ${fails}, ${mean(valid_scores)}, ${standardDeviation(valid_scores)}, ${player.printIterationsAndSelector()}`;
     return stat;
 }
 
