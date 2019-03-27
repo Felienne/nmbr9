@@ -295,13 +295,10 @@ export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
             && (deadline === undefined || Date.now() <= deadline)) {
         process.stderr.write(i === 0 ? '>' : '·');
         root.explore();
-<<<<<<< HEAD
         if (i%10===0){
             process.stderr.write('·');
         }
 
-=======
->>>>>>> 17e3d6f856fd116875963fe1c64cd7a7968998ba
         i += 1;
     }
 
