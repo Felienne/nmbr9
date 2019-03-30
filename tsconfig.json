@@ -9,8 +9,8 @@
     "noFallthroughCasesInSwitch": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false
   },
   "include": ["*.ts"],
   "exclude": ["node_modules"]
