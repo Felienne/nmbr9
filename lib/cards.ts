@@ -1,6 +1,5 @@
 import { Tile } from "./tile";
-import { randInt } from "./util";
-import { shuffle } from "@tensorflow/tfjs-core/dist/util";
+import { shuffle } from "./util";
 
 export const CARD_TYPES = 20;
 
@@ -39,7 +38,7 @@ export class Deck {
      * Turn the remaining cards into a histogram
      */
     public remainingHisto(): number[] {
-        const ret = new Array(CARD_TYPES).fill(0);
+        const ret = new Array(10).fill(0);
         for (const tile of this.remainingCards) {
             ret[tile.value] += 1;
         }
@@ -66,8 +65,4 @@ export class Deck {
         shuffle(ret.remainingCards);
         return ret;
     }
-}
-
-function swap<T>(xs: T[], i: number, j: number) {
-    [xs[i], xs[j]] = [xs[j], xs[i]];
 }

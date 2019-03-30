@@ -11,5 +11,7 @@
     "inlineSources": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true
-  }
+  },
+  "include": ["*.ts"],
+  "exclude": ["node_modules"]
 }

@@ -7,10 +7,9 @@ const appendFile = util.promisify(fs.appendFile);
 
 async function main() {
     const player = new NumberZero({
-        maxIterations: 50
+        maxIterations: 50,
+        modelDir: 'numberzero.model',
     });
-
-    await player.initialize();
 
     while (true) {
         const stats = await playFixedDeck(player, FIXED_DECKS[5]); // Felienne says 5

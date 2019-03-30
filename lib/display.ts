@@ -58,7 +58,6 @@ export const TILE_COLORS = [
     '#D42242', // 9
 ];
 
-
 const BARCHARS = '▁▂▃▄▅▆▇█';
 
 /**

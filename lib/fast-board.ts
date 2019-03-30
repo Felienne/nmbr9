@@ -2,10 +2,11 @@ import { Tile } from "./tile";
 import { Move, Point, Box, Orientation, CandidateMove, isCandidateMove } from "./board";
 import { setFlagsFromString } from "v8";
 import { Field } from "./field";
+import { Deck } from "./cards";
 
 export const TILE_WIDTH = 5;
 export const TILE_HEIGHT = 6;
-export const BOARD_SIZE = 14;
+export const BOARD_SIZE = 16;
 
 /**
  * A class similar to Board (but hopefully faster) which can be copied

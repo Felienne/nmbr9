@@ -124,3 +124,17 @@ export function flatMap<T, U>(xs: T[], f: (x: T) => U[]): U[] {
     }
     return ret;
 }
+
+/**
+ * Fisher-Yates
+ */
+export function shuffle<T>(xs: T[]) {
+    for (let i = 0; i < xs.length; i++) {
+        const j = randInt(i, xs.length);
+        swap(xs, i, j);
+    }
+}
+
+export function swap<T>(xs: T[], i: number, j: number) {
+    [xs[i], xs[j]] = [xs[j], xs[i]];
+}
