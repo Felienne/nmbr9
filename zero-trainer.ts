@@ -1,9 +1,10 @@
-import { playStandardDecks } from "./lib/test-harness";
+import { playStandardDecks, playFixedDeck } from "./lib/test-harness";
 import yargs = require('yargs');
 
 import fs = require('fs');
 import util = require('util');
 import { NumberZero } from "./lib/players/number-zero";
+import { Deck } from "./lib/cards";
 
 const appendFile = util.promisify(fs.appendFile);
 
@@ -18,17 +19,20 @@ async function main() {
 
     const player = new NumberZero({
         // Iterations so we don't depend on CPU speed for results
-        maxIterations: 1000,
+        maxIterations: 100,
         printTreeStatistics: true,
         modelDir: args.model,
         randomPlayoutNoiseScore: args["playout-noise"],
-        samplesDirectory: args.samples,
+        explorationFactor: 10
     });
 
-    const plays_per_deck = 3;
-    const stats = await playStandardDecks(player, plays_per_deck);
+    const deck = Deck.fixedDeck([2, 0, 6, 8, 2, 4, 5, 7, 0, 9, 8, 3, 1, 4, 6, 9, 5, 3, 7, 1])
+    const stats = await playFixedDeck(player, deck)
+    console.log(`${new Date()} ${stats}`);
 
-    console.log(stats);
+    if (args.samples) {
+        await player.saveTrainingSamples(args.samples);
+    }
 }
 
 main().catch(e => {

@@ -1,6 +1,16 @@
 #!/bin/bash
-set -euo pipefail
-(cd .. && tsc)
+# Must be done before set -u
+echo Activating venv
+source venv/bin/activate
 
-python zero-trainer.py
-(cd .. && node zero-trainer --model numberzero.model --samples samples)
+set -euo pipefail
+echo Compiling
+(cd .. && node_modules/.bin/tsc)
+
+while true; do
+  echo Training
+  python zero-trainer.py train
+
+  echo Playing
+  (cd .. && date >> games.txt && node zero-trainer --model numberzero.model --samples samples | tee -a games.txt)
+done

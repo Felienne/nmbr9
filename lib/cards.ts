@@ -60,7 +60,7 @@ export class Deck {
         return new Deck(this);
     }
 
-    public shuffle(): Deck{
+    public shuffle(): Deck {
         const ret = new Deck(this);
         shuffle(ret.remainingCards);
         return ret;

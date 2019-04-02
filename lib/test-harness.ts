@@ -33,7 +33,7 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
     const ret = new Array<number | undefined>();
 
     for (let i = 0; i < times; i++) {
-        const deck = sourceDeck.shuffle();
+        const deck = sourceDeck.copy();
         const board = new FastBoard();
 
         let tile = deck.draw();

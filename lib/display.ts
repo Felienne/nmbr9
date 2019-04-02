@@ -2,7 +2,9 @@ const chalk = require('chalk');
 import { range, sum } from "./util";
 import { Move, Orientation } from "./board";
 import util = require('util');
-import { zip } from "@tensorflow/tfjs-data";
+import { FastBoard } from "./fast-board";
+import { Deck } from "./cards";
+import mm3 = require('murmurhash-native');
 
 /**
  * Return a nice colorized stringification of the board
@@ -76,4 +78,12 @@ export function distribution(xs: number[]): string {
     if (highest === 0) { highest = 1; }
     const distr = xs.map(c => roughFraction(c / highest)).join('');
     return `[${lowest.toFixed(1)} ${distr} ${highest.toFixed(1)}]`;
+}
+
+const emoji = require('./emoji.json');
+
+export function fingerprintBoard(board: FastBoard, remainingDeck: Deck) {
+    const h = mm3.murmurHash32(Buffer.from([...board.heightMap.data, ...remainingDeck.remainingHisto()]));
+
+    return emoji[h % emoji.length];
 }

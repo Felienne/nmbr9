@@ -1,5 +1,5 @@
 import { pick, pickAndRemove, mean, sum } from '../util';
-import { roughFraction } from '../display';
+import { roughFraction, fingerprintBoard } from '../display';
 import { FastBoard } from '../fast-board';
 import { Tile } from '../tile';
 import { Deck } from '../cards';
@@ -8,6 +8,13 @@ import { Move, CandidateMove } from '../board';
 /**
  * An implementation of MCTS for Nmbr9
  */
+
+export interface ExploreOptions {
+    /**
+     * Print node fingerprints
+     */
+    fingerprintNodes?: boolean;
+}
 
 /**
  * A node in a Monte Carlo Tree
@@ -64,23 +71,40 @@ export class MonteCarloTree<M> {
         this.timesVisited = 0;
     }
 
-    public bestMove(){
+    public* rootPath(): IterableIterator<MonteCarloTree<M>> {
+        if (this.parent) { yield* this.parent.rootPath(); }
+        yield this;
+    }
+
+    public bestMoveChild(): [CandidateMove | undefined, MonteCarloTree<M> | undefined] {
         if (this.exploredMoves.size === 0){
             //we have not explored, we know nothing (we are from Barcelona)
             //we can returns any unexplored move.
-            return pick(this.unexploredMoves);
+            const move = pick(this.unexploredMoves);
+            if (!move) { return [undefined, undefined]; }
+
+            const node = this.addExploredNode(move);
+            return [move, node];
         }
 
         let maximumMeanScore = 0
-        let bestMove = undefined;
+        let bestPair: [CandidateMove | undefined, MonteCarloTree<M> | undefined] = [undefined, undefined];
         for (const [move, child] of this.exploredMoves.entries()){
             if (child.meanScore >= maximumMeanScore){
                 maximumMeanScore = child.meanScore;
-                bestMove = move;
+                bestPair = [move, child];
             }
         }
 
-        return bestMove;
+        return bestPair;
+    }
+
+    public get fingerprint() {
+        return fingerprintBoard(this.board, this.remainingDeck);
+    }
+
+    public bestMove(): CandidateMove | undefined {
+        return this.bestMoveChild()[0];
     }
 
     /**
@@ -92,18 +116,29 @@ export class MonteCarloTree<M> {
      * - If no "unexplored" moves, pick the explored child with the highest UCB score
      *   and recurse into that.
      */
-    public explore(): void {
+    public explore(options: ExploreOptions = {}): void {
+        if (options.fingerprintNodes) {
+            process.stderr.write(fingerprintBoard(this.board, this.remainingDeck));
+        }
+
         if (this.initialized === false){
             this.legalMoves = this.tile ? this.board.getLegalMoves(this.tile) : [];
             this.support.initializeNode(this)
             this.initialized = true
 
-            if (!this.support.continueExploringAfterInitialize) { return; }
+            if (!this.support.continueExploringAfterInitialize) {
+                if (options.fingerprintNodes) { process.stderr.write('\n'); }
+                return;
+            }
         }
 
         if (this.legalMoves.length === 0) {
             // This is a leaf node or there are no possible moves to play.
+            // Report the score so that we may update the weights and other
+            // trees may get explored.
+            // FIXME: Might bump exploration factor a bit if this happens?
             this.reportScore(this.support.scoreForBoard(this.board, this.tile !== undefined));
+            if (options.fingerprintNodes) { process.stderr.write('[end-of-game]\n'); }
             return;
         }
 
@@ -112,18 +147,18 @@ export class MonteCarloTree<M> {
             const freshChild = this.addExploredNode(toExplore);
 
             freshChild.randomPlayout();
+            if (options.fingerprintNodes) { process.stderr.write('\n'); }
         } else {
             const bestChild = this.mostPromisingChild();
             if (bestChild === undefined) {
-                console.log('This should never happen');
+                process.stderr.write('(no child to recurse into)');
                 // There are no more moves to play here, probably because the
                 // board is filled up to the brim. We score what's currently
                 // on the board.
                 return;
             }
-            // Collect more stats
-            bestChild.randomPlayout();
-            bestChild.explore();
+            // bestChild.randomPlayout(); // Collect more stats
+            bestChild.explore(options);
         }
     }
 
@@ -162,6 +197,7 @@ export class MonteCarloTree<M> {
      * Perform a random playout starting from this node, reporting the score afterwards
      */
     public randomPlayout(): void {
+        process.stderr.write('(playout → ');
         const playoutBoard = new FastBoard(this.board);
         const playoutDeck = this.remainingDeck.shuffle();
 
@@ -178,6 +214,7 @@ export class MonteCarloTree<M> {
         }
 
         const score = this.support.scoreForBoard(playoutBoard, tile !== undefined);
+        process.stderr.write(`${score})`);
         this.reportScore(score);
     }
 
@@ -264,7 +301,7 @@ export function printTreeStatistics<M>(root: MonteCarloTree<M>) {
 
     visit(root, 0);
 
-    console.log([
+    console.error([
         `Tree depth: ${stats.maxDepth}`,
         `total nodes: ${sum(stats.totalChildren).toFixed(0)}`,
         `avg degree: ${mean(stats.totalChildren).toFixed(1)}`,
@@ -278,7 +315,7 @@ interface TreeStats {
     unexploredChildren: number[];
 }
 
-export interface MctsOptions {
+export interface MctsOptions extends ExploreOptions{
     maxThinkingTimeSec?: number;
     maxIterations?: number;
 }
@@ -290,15 +327,13 @@ export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
     const deadline = options.maxThinkingTimeSec !== undefined ? Date.now() + options.maxThinkingTimeSec * 1000 : undefined;
     const maxIterations = options.maxIterations;
 
+    process.stderr.write('performMcts()\n');
+
     let i = 0;
     while ((maxIterations === undefined || i < maxIterations)
             && (deadline === undefined || Date.now() <= deadline)) {
-        process.stderr.write(i === 0 ? '>' : '·');
-        root.explore();
-        if (i%10===0){
-            process.stderr.write('·');
-        }
-
+        root.explore(options);
+        if (!options.fingerprintNodes) { process.stderr.write('·'); }
         i += 1;
     }
 
@@ -313,4 +348,10 @@ export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
  */
 export function defaultUpperConfidenceBound<M>(node: MonteCarloTree<M>, parentVisitCount: number, explorationFactor: number) {
     return node.meanScore + explorationFactor * Math.sqrt(Math.log(parentVisitCount) / node.timesVisited);
+}
+
+export function fingerprintAll(path: IterableIterator<MonteCarloTree<any>>) {
+    const ret = new Array<string>();
+    for (const node of path) { ret.push(fingerprintBoard(node.board, node.remainingDeck)); }
+    return ret.join('');
 }

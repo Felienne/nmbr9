@@ -8,7 +8,7 @@ import { weightedPick } from "../util";
 import { IPlayer } from '../player';
 import { Deck } from '../cards';
 import { Tile } from '../tile';
-import { MonteCarloTree, performMcts, printTreeStatistics, TreeSearchSupport } from '../algo/monte-carlo';
+import { MonteCarloTree, performMcts, printTreeStatistics, TreeSearchSupport, fingerprintAll } from '../algo/monte-carlo';
 import { distribution } from '../display';
 
 export interface NumberZeroOptions {
@@ -42,10 +42,21 @@ export interface NumberZeroOptions {
     modelDir: string;
 
     /**
-     * Where to store training samples
+     * Exploration factor
+     *
+     * The higher this number, the more lack of exploration is incorporated
+     * into the search.
+     *
+     * Range: if a node is only visited 1 time, and a 1000 iterations are done,
+     * this value is multiplied by ~2.5. So values should be on the order of
+     * half of game scores.
+     *
+     * @default 10
      */
-    samplesDirectory?: string;
+    explorationFactor?: number;
 }
+
+export type TrainingSample = [number[], number];
 
 /**
  * NN-based player
@@ -65,9 +76,12 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
 
     private model?: tf.LayersModel;
     private readonly randomPlayoutNoiseScore: number;
+    private readonly explorationFactor: number;
+    private readonly trainigSamples = new Array<TrainingSample>();
 
     constructor(private readonly options: NumberZeroOptions) {
-        this.randomPlayoutNoiseScore = options.randomPlayoutNoiseScore !== undefined ? options.randomPlayoutNoiseScore : 10;
+        this.randomPlayoutNoiseScore = options.randomPlayoutNoiseScore !== undefined ? options.randomPlayoutNoiseScore : 5;
+        this.explorationFactor = options.explorationFactor !== undefined ? options.explorationFactor : 10;
     }
 
     public async calculateMove(board: FastBoard, remainingDeck: Deck, tile: Tile): Promise<Move | undefined> {
@@ -75,15 +89,25 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
 
         const root = new MonteCarloTree(undefined, board, tile, remainingDeck, this);
 
-        performMcts(root, this.options);
+        performMcts(root, {
+            ...this.options,
+            fingerprintNodes: true
+        });
 
         if (this.options.printTreeStatistics) {
             printTreeStatistics(root);
         }
 
-        await this.saveTrainingSamples(root);
+        this.recordTrainingSamples(root);
 
-        return root.bestMove();
+        const [bestMove, bestNode] = root.bestMoveChild();
+        if (bestNode) {
+            process.stderr.write(`Picking ${bestNode.fingerprint}, max score ${bestNode.maxScore}, mean score ${bestNode.meanScore}\n`);
+        } else {
+            process.stderr.write(`No move to make.\n`);
+        }
+
+        return bestMove;
     }
 
     public printIterationsAndSelector(): string {
@@ -115,7 +139,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
             child.annotation = { predictedScore: scores[i] };
         });
 
-        process.stderr.write((scores.length > 0 ? distribution(scores) : '?') + '\n');
+        process.stderr.write((scores.length > 0 ? distribution(scores) : '?'));
 
         // Also do a random rollout on the one node we're initializing. This
         // will correspond to one random rollout per thinking turn.
@@ -128,10 +152,8 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
      * Combine exploration with exploitation.
      */
     public upperConfidenceBound(node: MonteCarloTree<N0Annotation>, parentVisitCount: number) {
-        const explorationFactor = 0.5;
-
         return adjustedMeanScore(node)
-            + explorationFactor * Math.sqrt(Math.log(Math.max(1, parentVisitCount)) / (node.timesVisited + 1));
+            + this.explorationFactor * Math.sqrt(Math.log(Math.max(1, parentVisitCount)) / (node.timesVisited + 1));
     }
 
     /**
@@ -170,7 +192,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         const cardHisto = remainingDeck.remainingHisto();
 
         const predictedScores = tf.tidy(() => {
-            const representations = boards.map(board => Array.from(board.heightMap.data).concat(cardHisto));
+            const representations = boards.map(board => [...board.heightMap.data, ...cardHisto]);
 
             const predictedScores = self.model!.predict(tf.tensor2d(representations));
             if (Array.isArray(predictedScores)) throw new Error('nuh-uh'); // Make type checker happy
@@ -195,29 +217,27 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
     public async gameFinished(board: FastBoard): Promise<void> {
     }
 
-    private async saveTrainingSamples(root: MonteCarloTree<any>) {
-        if (!this.options.samplesDirectory) { return; }
-
+    private recordTrainingSamples(root: MonteCarloTree<any>) {
         // Turn every explored node into a training sample, as such:
         // [ state ] -> maxScore
-        const samples = new Array<[number[], number]>();
-
         for (const node of exploredNodes(root)) {
             const repr = [
                 ...node.board.heightMap.data,
                 ...node.remainingDeck.remainingHisto()
             ];
-            samples.push([repr, node.maxScore]);
+            this.trainigSamples.push([repr, node.maxScore]);
         }
+    }
 
-        if (!await exists(this.options.samplesDirectory)) {
-            await mkdir(this.options.samplesDirectory);
+    public async saveTrainingSamples(dir: string) {
+        if (!await exists(dir)) {
+            await mkdir(dir);
         }
         await writeFile(
-            `${this.options.samplesDirectory}/${Date.now()}.json`,
+            `${dir}/${Date.now()}.json`,
             JSON.stringify({
                 board_size: BOARD_SIZE,
-                samples
+                samples: this.trainigSamples
             }),
             { encoding: 'utf-8' });
     }
