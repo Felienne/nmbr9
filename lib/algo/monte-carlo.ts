@@ -1,9 +1,8 @@
 import { pick, pickAndRemove, mean, sum } from '../util';
-import { roughFraction, fingerprintBoard } from '../display';
-import { FastBoard } from '../fast-board';
+import { fingerprintBoard } from '../display';
+import { Board, CandidateMove } from '../board';
 import { Tile } from '../tile';
 import { Deck } from '../cards';
-import { Move, CandidateMove } from '../board';
 
 /**
  * An implementation of MCTS for Nmbr9
@@ -21,7 +20,7 @@ export interface ExploreOptions {
  */
 export class MonteCarloTree<M> {
     public readonly parent?: MonteCarloTree<M>;
-    public readonly board: FastBoard;
+    public readonly board: Board;
     // The tile to be played this round
     public readonly tile?: Tile;
     // The tiles left in the deck after this tile has been played
@@ -55,7 +54,7 @@ export class MonteCarloTree<M> {
 
     constructor(
             parent: MonteCarloTree<M> | undefined,
-            board: FastBoard,
+            board: Board,
             tile:Tile | undefined,
             deck: Deck,
             support: TreeSearchSupport<M>,
@@ -198,7 +197,7 @@ export class MonteCarloTree<M> {
      */
     public randomPlayout(): void {
         process.stderr.write('(playout → ');
-        const playoutBoard = new FastBoard(this.board);
+        const playoutBoard = new Board(this.board);
         const playoutDeck = this.remainingDeck.shuffle();
 
         let tile = this.tile;
@@ -262,7 +261,7 @@ export interface TreeSearchSupport<M> {
     /**
      * Return a move to be used for a random playout
      */
-    pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined;
+    pickRandomPlayoutMove(startingBoard: Board, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined;
 
     /**
      * Return the score for a given board
@@ -270,7 +269,7 @@ export interface TreeSearchSupport<M> {
      * 'dnf' (Did Not Finish) is true if this is the final score for
      * a board in which the player painted themselves into a corner.
      */
-    scoreForBoard(board: FastBoard, dnf: boolean): number;
+    scoreForBoard(board: Board, dnf: boolean): number;
 
     /**
      * Return the UCB for a given node

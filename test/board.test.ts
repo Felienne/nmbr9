@@ -1,7 +1,6 @@
 import 'jest';
 import { Board, Orientation } from '../lib/board';
 import { Tile } from '../lib/tile';
-import { displayBoard } from '../lib/display';
 
 test('maxHeight is 1 after placing a stone', () => {
     // GIVEN

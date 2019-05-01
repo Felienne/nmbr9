@@ -1,9 +1,7 @@
 import { IPlayer } from "./player";
 import { Deck } from "./cards";
 import { Board } from "./board";
-import { FastBoard } from "./fast-board";
-import { setupMaster } from "cluster";
-import { range, flatMap, mean, standardDeviation } from "./util";
+import { mean, standardDeviation } from "./util";
 
 import fs = require('fs');
 import util = require('util');
@@ -34,7 +32,7 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
 
     for (let i = 0; i < times; i++) {
         const deck = sourceDeck.copy();
-        const board = new FastBoard();
+        const board = new Board();
 
         let tile = deck.draw();
         while (tile !== undefined) {

@@ -1,10 +1,8 @@
-import { Board, Orientation, Move } from '../board';
+import { Board, Move } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
 import { pick } from '../util';
-import { displayBoard } from '../display';
 import { Deck } from '../cards';
-import { FastBoard } from '../fast-board';
 
 /**
  * This player picks a move at random
@@ -12,7 +10,7 @@ import { FastBoard } from '../fast-board';
 export class RandomPlayer implements IPlayer {
     public readonly name: string = 'Randy McRandFace';
 
-    public async calculateMove(board: FastBoard, deck:Deck, tile: Tile): Promise<Move | undefined> {
+    public async calculateMove(board: Board, deck:Deck, tile: Tile): Promise<Move | undefined> {
 
         const loc = pick(board.getLegalMoves(tile));
 
@@ -28,6 +26,6 @@ export class RandomPlayer implements IPlayer {
         return 'determined by a fair dice roll';
     }
 
-    public async gameFinished(board: FastBoard): Promise<void> {
+    public async gameFinished(board: Board): Promise<void> {
     }
 }

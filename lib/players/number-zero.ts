@@ -2,7 +2,7 @@ require('@tensorflow/tfjs-node'); // Speed up TensorFlow by including this befor
 import fs = require('fs');
 import tf = require('@tensorflow/tfjs');
 import util = require('util');
-import { FastBoard, BOARD_SIZE } from "../fast-board";
+import { Board, BOARD_SIZE } from "../board";
 import { CandidateMove, Move } from "../board";
 import { weightedPick } from "../util";
 import { IPlayer } from '../player';
@@ -84,7 +84,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         this.explorationFactor = options.explorationFactor !== undefined ? options.explorationFactor : 10;
     }
 
-    public async calculateMove(board: FastBoard, remainingDeck: Deck, tile: Tile): Promise<Move | undefined> {
+    public async calculateMove(board: Board, remainingDeck: Deck, tile: Tile): Promise<Move | undefined> {
         if (!this.model) { await this.initialize(); }
 
         const root = new MonteCarloTree(undefined, board, tile, remainingDeck, this);
@@ -167,7 +167,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
      * values predicted by our NN, with some noise to make sure the NN doesn't
      * go myopic.
      */
-    public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined {
+    public pickRandomPlayoutMove(startingBoard: Board, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined {
         const boards = moves.map(move => startingBoard.playMoveCopy(move));
         const scores = this.predictBoardScores(boards, remainingDeck);
 
@@ -183,7 +183,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
     /**
      * Predict scores for the given board positions
      */
-    private predictBoardScores(boards: FastBoard[], remainingDeck: Deck): number[] {
+    private predictBoardScores(boards: Board[], remainingDeck: Deck): number[] {
         if (!this.model) { throw new Error('Call initialize() first'); }
         const self = this;
 
@@ -205,7 +205,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         return ret.map(w => w >= 0 ? w : 0);
     }
 
-    public scoreForBoard(board: FastBoard, dnf: boolean) {
+    public scoreForBoard(board: Board, dnf: boolean) {
         // Punish very badly for not finishing the board
         if (dnf) {
             return 0;
@@ -214,7 +214,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         }
     }
 
-    public async gameFinished(board: FastBoard): Promise<void> {
+    public async gameFinished(board: Board): Promise<void> {
     }
 
     private recordTrainingSamples(root: MonteCarloTree<any>) {

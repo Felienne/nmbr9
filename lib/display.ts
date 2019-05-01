@@ -1,8 +1,7 @@
 const chalk = require('chalk');
 import { range, sum } from "./util";
-import { Move, Orientation } from "./board";
+import { Board, Move, Orientation } from "./board";
 import util = require('util');
-import { FastBoard } from "./fast-board";
 import { Deck } from "./cards";
 import mm3 = require('murmurhash-native');
 
@@ -82,7 +81,7 @@ export function distribution(xs: number[]): string {
 
 const emoji = require('./emoji.json');
 
-export function fingerprintBoard(board: FastBoard, remainingDeck: Deck) {
+export function fingerprintBoard(board: Board, remainingDeck: Deck) {
     const h = mm3.murmurHash32(Buffer.from([...board.heightMap.data, ...remainingDeck.remainingHisto()]));
 
     return emoji[h % emoji.length];

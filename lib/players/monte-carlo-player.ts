@@ -1,10 +1,8 @@
-import { Board, Orientation, Move, Point } from '../board';
+import { Board, Move } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
 import { pick, range } from '../util';
-import { displayBoard } from '../display';
 import { Deck } from '../cards';
-import { FastBoard } from '../fast-board';
 
 /**
  * This player executes a simple MC algorithm
@@ -16,13 +14,13 @@ export class MonteCarloPlayer implements IPlayer {
         return 'determined by a fair dice roll';
     }
 
-    public async calculateMove(board: FastBoard, deck:Deck, tile: Tile): Promise<Move | undefined> {
+    public async calculateMove(board: Board, deck:Deck, tile: Tile): Promise<Move | undefined> {
 
         const moves = board.getLegalMoves(tile);
         let maxMoveScore = 0;
         let maxMove = undefined;
         for (const m of moves){
-            const MoveMax = this.maxScore(new FastBoard(board),deck, tile, m);
+            const MoveMax = this.maxScore(new Board(board),deck, tile, m);
             if (MoveMax > maxMoveScore){
                 maxMoveScore = MoveMax;
                 maxMove = m;
@@ -39,7 +37,7 @@ export class MonteCarloPlayer implements IPlayer {
         return undefined;
     }
 
-    private maxScore(board: FastBoard, deck:Deck, t:Tile, p:Move): number{
+    private maxScore(board: Board, deck:Deck, t:Tile, p:Move): number{
         const maxNumberofTries = 100;
         //plaats deze tile op het bord in deze orientatie
         board.place(t,p)
@@ -49,7 +47,7 @@ export class MonteCarloPlayer implements IPlayer {
         //nu gaan we voor deze plaatsing een aantal mogelijke trekkingen proberen
         for (const i of range(maxNumberofTries)){
             const tryDeck = deck.shuffle();
-            const tryBoard = new FastBoard(board);
+            const tryBoard = new Board(board);
 
             let drawnTile = tryDeck.draw();
             while (drawnTile !== undefined) {
@@ -68,6 +66,6 @@ export class MonteCarloPlayer implements IPlayer {
         return maxScore;
     }
 
-    public async gameFinished(board: FastBoard): Promise<void> {
+    public async gameFinished(board: Board): Promise<void> {
     }
 }

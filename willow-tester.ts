@@ -1,10 +1,6 @@
-import { Game } from "./lib/game";
 import { MonteCarloTreePlayer } from "./lib/players/monte-carlo-tree-hugger";
-import { playFixedDeck, FIXED_DECKS, playStandardDecks } from "./lib/test-harness";
-import { mean, standardDeviation } from "./lib/util";
-import { FastBoard } from "./lib/fast-board";
-import { Tile } from "./lib/tile";
-import { Move, CandidateMove } from "./lib/board";
+import { playStandardDecks } from "./lib/test-harness";
+import { Board, CandidateMove } from "./lib/board";
 
 import fs = require('fs');
 import util = require('util');
@@ -13,23 +9,23 @@ const appendFile = util.promisify(fs.appendFile);
 
 // Standardized test bench for the Willow player
 
-function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMove[]{
+function selector(startingBoard: Board, moves: CandidateMove[]):CandidateMove[]{
     //new selection strategy, see how many holes are possible and select smallest options
 
     function numberOfHolesForThisMove(move:CandidateMove){
-        const board = new FastBoard(startingBoard);
+        const board = new Board(startingBoard);
         board.playMove(move);
         return board.holesAt(move.targetLevel);
     }
 
     function boundingBoxForThisMove(move:CandidateMove){
-        const board = new FastBoard(startingBoard);
+        const board = new Board(startingBoard);
         board.playMove(move);
         return board.sizeOfBoundingBox(move.targetLevel);
     }
 
     function boundingBoxShapeForThisMove(move:CandidateMove){
-        const board = new FastBoard(startingBoard);
+        const board = new Board(startingBoard);
         board.playMove(move);
         return Math.abs(1-board.shapeOfBoundingBox(move.targetLevel));
     }
@@ -37,14 +33,14 @@ function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMov
     const allHoles = moves.map(numberOfHolesForThisMove);
     const minNumberofHoles = Math.min(...allHoles)
 
-    const ret = moves.filter((move,i) => { 
+    const ret = moves.filter((move,i) => {
         return allHoles[i] <= minNumberofHoles + 3
     })
 
     const allBoundingBoxes = ret.map(boundingBoxForThisMove);
     const minBoundingBox = Math.min(...allBoundingBoxes)
 
-    const ret2 = ret.filter((move,i) => { 
+    const ret2 = ret.filter((move,i) => {
         return allBoundingBoxes[i] <= minBoundingBox + 5
     })
 
@@ -53,7 +49,7 @@ function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMov
     const minBoundingBoxShape = Math.min(...allBoundingBoxesShapes)
     //console.log(minBoundingBoxShape)
 
-    const ret3 = ret2.filter((move,i) => { 
+    const ret3 = ret2.filter((move,i) => {
         return allBoundingBoxesShapes[i] <= minBoundingBoxShape + 0.5
     })
 
@@ -62,7 +58,7 @@ function selector(startingBoard: FastBoard, moves: CandidateMove[]):CandidateMov
 }
 
 
-function boardCalculator(board: FastBoard):number{
+function boardCalculator(board: Board):number{
 
 
     return board.score();

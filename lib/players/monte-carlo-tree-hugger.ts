@@ -3,13 +3,13 @@ import { Tile } from '../tile';
 import { IPlayer } from "../player";
 import { pick } from '../util';
 import { Deck } from '../cards';
-import { FastBoard } from '../fast-board';
+import { Board } from '../board';
 import { MonteCarloTree, printTreeStatistics, performMcts, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
 
-export type BoardFunction<T> = (board: FastBoard) => T;
+export type BoardFunction<T> = (board: Board) => T;
 
 export interface MonteCarloOptions {
     /**
@@ -45,7 +45,7 @@ export interface MonteCarloOptions {
     boardScoreCalculatorString?: string;
 }
 
-export type BranchSelectorFn = (board: FastBoard, moves: CandidateMove[]) => CandidateMove[];
+export type BranchSelectorFn = (board: Board, moves: CandidateMove[]) => CandidateMove[];
 
 /**
  * This player executes MC tree search
@@ -78,7 +78,7 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
         return defaultUpperConfidenceBound(node, Math.max(1,parentVisitCount), explorationFactor);
     }
 
-    public async calculateMove(board: FastBoard, deck:Deck, tile: Tile): Promise<Move | undefined> {
+    public async calculateMove(board: Board, deck:Deck, tile: Tile): Promise<Move | undefined> {
         const root = new MonteCarloTree(undefined, board, tile, deck, this);
 
         performMcts(root, this.options);
@@ -94,13 +94,13 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
         return `${this.options.maxIterations}, ${this.options.branchSelectorString}, ${this.options.boardScoreCalculatorString}`;
     }
 
-    public async gameFinished(board: FastBoard): Promise<void> {
+    public async gameFinished(board: Board): Promise<void> {
     }
 
     /**
      * Called by the Tree Search to prune the game tree
      */
-    public selectBranches(board: FastBoard, moves: CandidateMove[]): CandidateMove[] {
+    public selectBranches(board: Board, moves: CandidateMove[]): CandidateMove[] {
         return this.options.branchSelector ? this.options.branchSelector(board, moves) : moves;
     }
 
@@ -109,12 +109,12 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
      *
      * We do a purely random selection from all acceptable moves
      */
-    public pickRandomPlayoutMove(startingBoard: FastBoard, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined {
+    public pickRandomPlayoutMove(startingBoard: Board, moves: CandidateMove[], remainingDeck: Deck): CandidateMove | undefined {
         const acceptableMoves = this.selectBranches(startingBoard, moves);
         return pick(acceptableMoves);
     }
 
-    public scoreForBoard(board: FastBoard) {
+    public scoreForBoard(board: Board) {
         if (this.options.boardScoreCalculator) {
             return Math.max(0, this.options.boardScoreCalculator(board));
         }
