@@ -10,6 +10,7 @@ import { Deck } from '../cards';
 import { Tile } from '../tile';
 import { MonteCarloTree, performMcts, printTreeStatistics, TreeSearchSupport, fingerprintAll } from '../algo/monte-carlo';
 import { distribution } from '../display';
+import { GameState } from '../game-state';
 
 export interface NumberZeroOptions {
     /**
@@ -84,10 +85,10 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         this.explorationFactor = options.explorationFactor !== undefined ? options.explorationFactor : 10;
     }
 
-    public async calculateMove(board: Board, remainingDeck: Deck, tile: Tile): Promise<Move | undefined> {
+    public async calculateMove(state: GameState): Promise<Move | undefined> {
         if (!this.model) { await this.initialize(); }
 
-        const root = new MonteCarloTree(undefined, board, tile, remainingDeck, this);
+        const root = new MonteCarloTree(undefined, state, this);
 
         performMcts(root, {
             ...this.options,
@@ -102,7 +103,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
 
         const [bestMove, bestNode] = root.bestMoveChild();
         if (bestNode) {
-            process.stderr.write(`Picking ${bestNode.fingerprint}, max score ${bestNode.maxScore}, mean score ${bestNode.meanScore}\n`);
+            process.stderr.write(`Picking ${bestNode.state.fingerprint}, max score ${bestNode.maxScore}, mean score ${bestNode.meanScore}\n`);
         } else {
             process.stderr.write(`No move to make.\n`);
         }
@@ -132,7 +133,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
 
         // The values from the output tensor are the predicted scores, annotate
         // the moves with those values.
-        const scores = this.predictBoardScores(children.map(c => c.board), node.remainingDeck);
+        const scores = this.predictBoardScores(children.map(c => c.state.board), node.state.deck);
         children.forEach((child, i) => {
             // Store the predicted score on the node and use it for
             // exploration selection later on.
@@ -222,8 +223,8 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         // [ state ] -> maxScore
         for (const node of exploredNodes(root)) {
             const repr = [
-                ...node.board.heightMap.data,
-                ...node.remainingDeck.remainingHisto()
+                ...node.state.board.heightMap.data,
+                ...node.state.deck.remainingHisto()
             ];
             this.trainigSamples.push([repr, node.maxScore]);
         }

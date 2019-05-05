@@ -81,7 +81,7 @@ export function distribution(xs: number[]): string {
 
 const emoji = require('./emoji.json');
 
-export function fingerprintBoard(board: Board, remainingDeck: Deck) {
+export function fingerprintGameState(board: Board, remainingDeck: Deck) {
     const h = mm3.murmurHash32(Buffer.from([...board.heightMap.data, ...remainingDeck.remainingHisto()]));
 
     return emoji[h % emoji.length];

@@ -5,6 +5,7 @@ import { pick } from '../util';
 import { Deck } from '../cards';
 import { Board } from '../board';
 import { MonteCarloTree, printTreeStatistics, performMcts, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
+import { GameState } from '../game-state';
 
 
 // FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
@@ -66,7 +67,7 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
     public readonly continueExploringAfterInitialize = false;
 
     initializeNode(node: MonteCarloTree<any>): void {
-        for (const move of this.selectBranches(node.board, node.legalMoves)){
+        for (const move of this.selectBranches(node.state.board, node.legalMoves)){
             const child = node.addExploredNode(move)
             const score = child.randomPlayout();
         }
@@ -78,8 +79,8 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
         return defaultUpperConfidenceBound(node, Math.max(1,parentVisitCount), explorationFactor);
     }
 
-    public async calculateMove(board: Board, deck:Deck, tile: Tile): Promise<Move | undefined> {
-        const root = new MonteCarloTree(undefined, board, tile, deck, this);
+    public async calculateMove(state: GameState): Promise<Move | undefined> {
+        const root = new MonteCarloTree(undefined, state, this);
 
         performMcts(root, this.options);
 

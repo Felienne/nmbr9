@@ -5,6 +5,7 @@ import { mean, standardDeviation } from "./util";
 
 import fs = require('fs');
 import util = require('util');
+import { GameState } from "./game-state";
 const appendFile = util.promisify(fs.appendFile);
 
 // Some decks that are always the same so that we can honestly evaluate
@@ -31,37 +32,25 @@ export async function runDeck(player: IPlayer, sourceDeck: Deck, times: number=1
     const ret = new Array<number | undefined>();
 
     for (let i = 0; i < times; i++) {
-        const deck = sourceDeck.copy();
-        const board = new Board();
+        const state = new GameState(new Board(), sourceDeck.copy());
 
-        let tile = deck.draw();
-        while (tile !== undefined) {
-            const move = await player.calculateMove(board, deck, tile);
+        while (state.hasCards) {
+            const move = await player.calculateMove(state);
             if (move === undefined) {
-                if (deck.remainingCards.length===0){
-                    //if we have just 1 tile left, we could always place it at 0 and continue with just this score
-                    //not a real big issue, just log and end game
-                    console.log("Failed game with 0 tiles remaining (counted as finished).")
-                    break;
-                }else{
-                    console.log("Failed game with", deck.remainingCards.length, " tiles remaining. Score so far was:", board.score())
-                    // End of game. FIXME: Should we score 0 to penalize harder?
-                    ret.push(undefined);
-                    continue;
-                }
-
+                console.log("Failed game with", state.deck.cardsRemaining, " tiles remaining. Score so far was:", state.board.score())
+                // End of game. FIXME: Should we score 0 to penalize harder?
+                ret.push(undefined);
+                continue;
             }
-            board.place(tile, move);
-
-            tile = deck.draw();
+            state.play(move);
         }
 
         console.log(`Deck played ${i+1} out of ${times} times`)
-        console.log('Score: ', board.score());
-        console.log('Holes: ', board.holesAt(1));
-        await player.gameFinished(board);
+        console.log('Score: ', state.score);
+        console.log('Holes: ', state.board.holesAt(1));
+        await player.gameFinished(state.board);
 
-        ret.push(board.score());
+        ret.push(state.score);
     };
 
     return ret;

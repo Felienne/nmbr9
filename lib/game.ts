@@ -3,6 +3,7 @@ import { Deck } from "./cards";
 import { Board } from "./board";
 import { Timer } from "./util";
 import { displayBoard, displayMove } from "./display";
+import { GameState } from "./game-state";
 
 /**
  * A single round of the game
@@ -28,11 +29,9 @@ export class Game {
      */
     public async play() {
         let turn = 0;
-        let drawnTile = this.deck.draw();
-        while (drawnTile !== undefined) {
-            const tile = drawnTile;
+        while (this.deck.hasCards) {
             turn += 1;
-            console.log("Turn:", turn, " | Tile:", tile.value);
+            console.log("Turn:", turn, " | Tile:", this.deck.currentTile.value);
 
             // Give all non-disqualified players a chance to move
             for (const player of this.players) {
@@ -41,13 +40,13 @@ export class Game {
                 player.timer.start();
 
                 try {
-                    // speler krijgt een kopie van het bord en het deck, anders kan hij het stiekem aanpassen!
-                    const copiedDeck = this.deck.shuffle();
-                    const copiedBoard = new Board(player.board);
+                    // Player gets a randomized copy of the deck, otherwise they'll be able to
+                    // peek at it or modify it.
+                    const playerState = new GameState(player.board.copy(), this.deck.copyShuffleInvisible());
 
-                    const move = await player.logic.calculateMove(copiedBoard, copiedDeck, tile);
+                    const move = await player.logic.calculateMove(playerState);
                     if (move !== undefined) {
-                        player.board.place(tile, move);
+                        player.board.place(this.deck.currentTile, move);
                         console.log(player.logic.name, "plays", displayMove(move), "(score so far:", player.board.score(), ")");
                     } else {
                         player.disqualified = true;
@@ -62,7 +61,7 @@ export class Game {
                 }
             }
 
-            drawnTile = this.deck.draw();
+            this.deck.advance();
         }
 
         // Game done

@@ -1,8 +1,7 @@
 import { Board, Move } from '../board';
-import { Tile } from '../tile';
 import { IPlayer } from "../player";
 import { pick } from '../util';
-import { Deck } from '../cards';
+import { GameState } from '../game-state';
 
 /**
  * This player picks a move at random
@@ -10,9 +9,8 @@ import { Deck } from '../cards';
 export class RandomPlayer implements IPlayer {
     public readonly name: string = 'Randy McRandFace';
 
-    public async calculateMove(board: Board, deck:Deck, tile: Tile): Promise<Move | undefined> {
-
-        const loc = pick(board.getLegalMoves(tile));
+    public async calculateMove(state: GameState): Promise<Move | undefined> {
+        const loc = pick(state.legalMoves());
 
         if (loc) {
             return loc;

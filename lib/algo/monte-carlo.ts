@@ -1,8 +1,8 @@
 import { pick, pickAndRemove, mean, sum } from '../util';
-import { fingerprintBoard } from '../display';
+import { fingerprintGameState } from '../display';
 import { Board, CandidateMove } from '../board';
-import { Tile } from '../tile';
 import { Deck } from '../cards';
+import { GameState } from '../game-state';
 
 /**
  * An implementation of MCTS for Nmbr9
@@ -20,11 +20,7 @@ export interface ExploreOptions {
  */
 export class MonteCarloTree<M> {
     public readonly parent?: MonteCarloTree<M>;
-    public readonly board: Board;
-    // The tile to be played this round
-    public readonly tile?: Tile;
-    // The tiles left in the deck after this tile has been played
-    public readonly remainingDeck: Deck;
+    public readonly state: GameState;
 
     /**
      * "Children" are explored submoves
@@ -48,26 +44,21 @@ export class MonteCarloTree<M> {
 
     private initialized: boolean = false;
 
-    public get meanScore(): number{
-        return this.totalScore / this.timesVisited;
-    }
-
     constructor(
             parent: MonteCarloTree<M> | undefined,
-            board: Board,
-            tile:Tile | undefined,
-            deck: Deck,
+            state: GameState,
             support: TreeSearchSupport<M>,
             ) {
         this.parent = parent;
-        this.board = board;
-
-        this.tile = tile;
-        this.remainingDeck =  deck;
+        this.state = state;
         this.support = support;
 
         this.totalScore = 0;
         this.timesVisited = 0;
+    }
+
+    public get meanScore(): number{
+        return this.totalScore / this.timesVisited;
     }
 
     public* rootPath(): IterableIterator<MonteCarloTree<M>> {
@@ -98,10 +89,6 @@ export class MonteCarloTree<M> {
         return bestPair;
     }
 
-    public get fingerprint() {
-        return fingerprintBoard(this.board, this.remainingDeck);
-    }
-
     public bestMove(): CandidateMove | undefined {
         return this.bestMoveChild()[0];
     }
@@ -117,11 +104,11 @@ export class MonteCarloTree<M> {
      */
     public explore(options: ExploreOptions = {}): void {
         if (options.fingerprintNodes) {
-            process.stderr.write(fingerprintBoard(this.board, this.remainingDeck));
+            process.stderr.write(this.state.fingerprint);
         }
 
         if (this.initialized === false){
-            this.legalMoves = this.tile ? this.board.getLegalMoves(this.tile) : [];
+            this.legalMoves = this.state.legalMoves();
             this.support.initializeNode(this)
             this.initialized = true
 
@@ -136,7 +123,7 @@ export class MonteCarloTree<M> {
             // Report the score so that we may update the weights and other
             // trees may get explored.
             // FIXME: Might bump exploration factor a bit if this happens?
-            this.reportScore(this.support.scoreForBoard(this.board, this.tile !== undefined));
+            this.reportScore(this.support.scoreForBoard(this.state.board, this.state.deck.hasCards));
             if (options.fingerprintNodes) { process.stderr.write('[end-of-game]\n'); }
             return;
         }
@@ -166,13 +153,10 @@ export class MonteCarloTree<M> {
      */
     public addExploredNode(move: CandidateMove): MonteCarloTree<M> {
         // What's left becomes the Deck.
-        // TODO: Our life would be sooooooooo much easier if Deck was all the
-        // tiles with a '.currentTile' accessor (or something)
-        const boardAfterMove = this.board.playMoveCopy(move);
-        const deckAfterMove = this.remainingDeck.shuffle();
-        const nextTile = deckAfterMove.draw();
+        const stateAfterMove = this.state. copy();
+        stateAfterMove.play(move);
 
-        const freshChild = new MonteCarloTree(this, boardAfterMove, nextTile, deckAfterMove, this.support);
+        const freshChild = new MonteCarloTree(this, stateAfterMove, this.support);
         this.exploredMoves.set(move, freshChild);
         return freshChild;
     }
@@ -197,22 +181,19 @@ export class MonteCarloTree<M> {
      */
     public randomPlayout(): void {
         process.stderr.write('(playout → ');
-        const playoutBoard = new Board(this.board);
-        const playoutDeck = this.remainingDeck.shuffle();
+        const playoutState = this.state.randomizedCopy();
 
-        let tile = this.tile;
-        while (tile !== undefined) {
+        while (playoutState.hasCards) {
             // Random move met tile
-            const move = this.support.pickRandomPlayoutMove(playoutBoard, playoutBoard.getLegalMoves(tile), playoutDeck);
+            const move = this.support.pickRandomPlayoutMove(playoutState.board, playoutState.legalMoves(), playoutState.deck);
             if (move === undefined) {
                 break;
             }
 
-            playoutBoard.playMove(move);
-            tile = playoutDeck.draw();
+            playoutState.play(move);
         }
 
-        const score = this.support.scoreForBoard(playoutBoard, tile !== undefined);
+        const score = this.support.scoreForBoard(playoutState.board, playoutState.hasCards);
         process.stderr.write(`${score})`);
         this.reportScore(score);
     }
@@ -351,6 +332,6 @@ export function defaultUpperConfidenceBound<M>(node: MonteCarloTree<M>, parentVi
 
 export function fingerprintAll(path: IterableIterator<MonteCarloTree<any>>) {
     const ret = new Array<string>();
-    for (const node of path) { ret.push(fingerprintBoard(node.board, node.remainingDeck)); }
+    for (const node of path) { ret.push(node.state.fingerprint); }
     return ret.join('');
 }

@@ -1,6 +1,7 @@
 import 'jest';
 import { Board, Orientation } from '../lib/board';
 import { Tile } from '../lib/tile';
+import { displayBoard } from '../lib/display';
 
 test('maxHeight is 1 after placing a stone', () => {
     // GIVEN
@@ -92,9 +93,6 @@ test('empty board has many possible positions', () => {
     expect(options.length).toBeGreaterThan(0);
 });
 
-
-
-
 test('place 8, score is 0', () => {
     // GIVEN
     const board = new Board();
@@ -131,11 +129,11 @@ test('place 9, should be able to place another 9 next to it', () => {
     const board = new Board();
 
     // WHEN
-    const t9 = new Tile(9,1);
-    board.place(t9, { x: 11, y: 16, orientation: Orientation.Up });
+    const t9 = new Tile(9, 1);
+    board.place(t9, { x: 6, y: 6, orientation: Orientation.Up });
 
     const t9_2 = new Tile(9,2);
-    let allowed = board.canPlace(t9_2, {x:14, y:16, orientation: Orientation.Up});
+    let allowed = board.canPlace(t9_2, {x: 9, y: 6, orientation: Orientation.Up});
 
     // THEN
     expect(allowed).toBe(true);

@@ -1,6 +1,5 @@
 import { Board, Move } from "./board";
-import { Tile } from "./tile";
-import { Deck } from "./cards";
+import { GameState } from "./game-state";
 
 /**
  * Interface that should be implemented by Players
@@ -14,7 +13,7 @@ export interface IPlayer {
     /**
      * Called when the player needs to make a move
      */
-    calculateMove(board: Board, deck: Deck, tile: Tile): Promise<Move | undefined>;
+    calculateMove(state: GameState): Promise<Move | undefined>;
 
     /**
      * Prints info about the player needed for logging
