@@ -2,7 +2,7 @@ require('@tensorflow/tfjs-node'); // Speed up TensorFlow by including this befor
 import fs = require('fs');
 import tf = require('@tensorflow/tfjs');
 import util = require('util');
-import { Board, BOARD_SIZE } from "../board";
+import { Board, MAX_BOARD_SIZE } from "../board";
 import { CandidateMove, Move } from "../board";
 import { weightedPick } from "../util";
 import { IPlayer } from '../player';
@@ -237,7 +237,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
         await writeFile(
             `${dir}/${Date.now()}.json`,
             JSON.stringify({
-                board_size: BOARD_SIZE,
+                board_size: MAX_BOARD_SIZE,
                 samples: this.trainigSamples
             }),
             { encoding: 'utf-8' });

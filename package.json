@@ -20,15 +20,19 @@
   },
   "homepage": "https://github.com/Felienne/-nmbr9#readme",
   "devDependencies": {
-    "@types/jest": "^24.0.11",
+    "@types/jest": "^24.0.12",
     "@types/node": "^11.12.2",
     "fast-check": "^1.13.0",
-    "jest": "^24.5.0",
-    "ts-jest": "^24.0.0",
-    "typescript": "^3.4.1"
+    "jest": "^24.7.1",
+    "typescript": "==3.4.1"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js"
+    ]
   },
   "dependencies": {
-    "@tensorflow/tfjs-node": "^1.0.2",
+    "@tensorflow/tfjs-node": "^1.1.2",
     "@types/xmlbuilder": "^11.0.1",
     "@types/yargs": "^12.0.10",
     "chalk": "^2.4.2",

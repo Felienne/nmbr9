@@ -27,6 +27,7 @@ export interface Move extends Point {
 export interface CandidateMove extends Move {
     tile: Tile;
     targetLevel: number; // 1 == placed on floor
+    turn: number;
 }
 
 export function isCandidateMove(x: any): x is CandidateMove {
@@ -42,7 +43,7 @@ export interface Box {
 
 export const TILE_WIDTH = 5;
 export const TILE_HEIGHT = 6;
-export const BOARD_SIZE = 16;
+export const MAX_BOARD_SIZE = 16;
 
 /**
  * A class similar to Board (but hopefully faster) which can be copied
@@ -65,7 +66,7 @@ export class Board {
      /**
      * Size of the field which can be played on
      */
-    public readonly size = BOARD_SIZE;
+    public readonly size = MAX_BOARD_SIZE;
 
     /**
      * Memory for the height map
@@ -144,6 +145,9 @@ export class Board {
     }
 
     public playMove(move: CandidateMove): void {
+        if (move.turn !== this.turnsPlayed) {
+            throw new Error(`CandidateMove has turn ${move.turn} but board is at turn ${this.turnsPlayed}`);
+        }
         this.place(move.tile, move);
     }
 
@@ -259,7 +263,7 @@ export class Board {
             if (!touching) return undefined;
         }
 
-        return { ...move, tile, targetLevel: supportingLevel + 1 };
+        return { ...move, tile, targetLevel: supportingLevel + 1, turn: this.turnsPlayed };
     }
 
     public maxHeight() {
@@ -284,7 +288,7 @@ export class Board {
     }
 
     /**
-     * Makes the board immutable, return a function that undoes the function
+     * Makes the board immutable, return a function that undoes the operation
      */
     public makeImmutable() {
         this.immutable += 1;

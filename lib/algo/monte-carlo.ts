@@ -25,6 +25,7 @@ export interface ExploreOptions {
 export class MonteCarloTree<M> {
     public readonly parent?: MonteCarloTree<M>;
     public readonly state: GameState;
+    public readonly level: number;
 
     /**
      * "Children" are explored submoves
@@ -56,6 +57,7 @@ export class MonteCarloTree<M> {
         this.parent = parent;
         this.state = state;
         this.support = support;
+        this.level = parent ? parent.level + 1 : 0;
 
         this.totalScore = 0;
         this.timesVisited = 0;
