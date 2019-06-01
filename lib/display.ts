@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 import { range, sum } from "./util";
-import { Board, Move, Orientation } from "./board";
+import { Board, Move, Orientation, Box } from "./board";
 import util = require('util');
 import { Deck } from "./cards";
 import mm3 = require('murmurhash-native');
@@ -57,23 +57,19 @@ interface Renderer {
 }
 
 export function displayBoardGen(board: IBoard, renderer: Renderer) {
-    const span = range(board.size);
+    const bb = board.boundingBox;
 
-    for (let y = 0; y < board.size; y++) {
+    for (let y = bb.topLeft.y; y < bb.botRight.y; y++) {
         renderer.beginRow();
-        const rowHeights = span.map(x => board.heightAt(x, y));
-
-        // Skip empty rows
-        if (rowHeights.every(h => h === 0)) continue;
-
-        rowHeights.forEach((h, x) => {
+        for (let x = bb.topLeft.x; x < bb.botRight.x; x++) {
+            const h = board.heightAt(x, y);
             if (h === 0) {
                 renderer.emptyCell();
             } else {
                 const tileNr = board.tileValueAt(x, y);
                 renderer.tile(h, TILE_COLORS[tileNr]);
             }
-        });
+        }
         renderer.endRow();
     }
 }
@@ -90,6 +86,7 @@ export function displayMove(move: Move) {
 
 interface IBoard {
     readonly size:number;
+    readonly boundingBox: Box;
     heightAt(x: number, y: number): number;
     tileValueAt(x: number, y: number): number;
     printExtraInfo(): string;

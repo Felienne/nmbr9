@@ -73,7 +73,7 @@ export class MonteCarloTree<M> {
     }
 
     public bestMoveChild(): [CandidateMove | undefined, MonteCarloTree<M> | undefined] {
-        if (this.exploredMoves.size === 0){
+        if (this.exploredMoves.size === 0) {
             //we have not explored, we know nothing (we are from Barcelona)
             //we can returns any unexplored move.
             const move = pick(this.unexploredMoves);
@@ -114,7 +114,7 @@ export class MonteCarloTree<M> {
         }
 
         if (this.initialized === false){
-            this.legalMoves = this.state.legalMoves();
+            this.legalMoves = Array.from(this.state.legalMoves());
             this.support.initializeNode(this)
             this.initialized = true
 
@@ -186,12 +186,13 @@ export class MonteCarloTree<M> {
      * Perform a random playout starting from this node, reporting the score afterwards
      */
     public randomPlayout(): void {
+
         process.stderr.write('(playout → ');
         const playoutState = this.state.randomizedCopy();
 
         while (playoutState.hasCards) {
             // Random move met tile
-            const move = this.support.pickRandomPlayoutMove(playoutState.board, playoutState.legalMoves(), playoutState.deck);
+            const move = this.support.pickRandomPlayoutMove(playoutState.board, Array.from(playoutState.legalMoves()), playoutState.deck);
             if (move === undefined) {
                 break;
             }
@@ -246,8 +247,6 @@ export class MonteCarloTree<M> {
         ret.sort((a, b) => b.meanScore - a.meanScore);
         return ret;
     }
-
-
 }
 
 export interface PlayoutResult {
@@ -362,6 +361,44 @@ export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
     }
 
     return root.bestMove();
+}
+
+export interface DefaultTreeSearchOptions {
+    /**
+     * Exploration factor
+     *
+     * Lower = More exploitation
+     * Higher = More exploration
+     *
+     * Good values are in the range 1..10
+     */
+    explorationFactor?: number;
+}
+
+export class DefaultTreeSearch<M> implements TreeSearchSupport<M> {
+    public continueExploringAfterInitialize: boolean = true;
+
+    private readonly explorationFactor: number;
+
+    constructor(options: DefaultTreeSearchOptions = {}) {
+        this.explorationFactor = options.explorationFactor !== undefined ? options.explorationFactor : 5;
+    }
+
+    public initializeNode(node: MonteCarloTree<M>): void {
+        node.unexploredMoves.push(...node.legalMoves);
+    }
+
+    public pickRandomPlayoutMove(startingBoard: Board, moves: CandidateMove[], remainingDeck: Deck): CandidateMove {
+        return pick(moves);
+    }
+
+    public scoreForBoard(board: Board, dnf: boolean): number {
+        return dnf ? 0 : board.score();
+    }
+
+    public upperConfidenceBound(node: MonteCarloTree<M>, parentVisitCount: number): number {
+        return defaultUpperConfidenceBound(node, Math.max(1, parentVisitCount), this.explorationFactor);
+    }
 }
 
 /**

@@ -10,7 +10,7 @@ export class RandomPlayer implements IPlayer {
     public readonly name: string = 'Randy McRandFace';
 
     public async calculateMove(state: GameState): Promise<Move | undefined> {
-        const loc = pick(state.legalMoves());
+        const loc = pick(Array.from(state.legalMoves()));
 
         if (loc) {
             return loc;

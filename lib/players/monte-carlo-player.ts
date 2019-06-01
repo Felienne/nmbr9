@@ -54,7 +54,7 @@ export class MonteCarloPlayer implements IPlayer {
             while (tryDeck.hasCards) {
                 const drawnTile = tryDeck.currentTile;
 
-                const move = pick(tryBoard.getLegalMoves(drawnTile));
+                const move = pick(Array.from(tryBoard.getLegalMoves(drawnTile)));
                 if (move === undefined) { break; } // End of game. FIXME: Should we score 0 to penalize harder?
                 tryBoard.place(drawnTile, move);
 

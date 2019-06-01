@@ -35,8 +35,8 @@ export class GameState {
     return this.board.score();
   }
 
-  public legalMoves() {
-    return this.deck.hasCards ? this.board.getLegalMoves(this.deck.currentTile) : [];
+  public* legalMoves() {
+    yield* this.deck.hasCards ? this.board.getLegalMoves(this.deck.currentTile) : [];
   }
 
   public get fingerprint() {

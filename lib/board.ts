@@ -92,7 +92,7 @@ export class Board {
     public turnsPlayed: number;
 
     // bounding box limits the locations that we have to check
-    private readonly boundingBox: Box;
+    public readonly boundingBox: Box;
 
     private immutable: number = 0;
 
@@ -111,8 +111,8 @@ export class Board {
         } else {
             const mid = Math.floor(this.size / 2);
             this.boundingBox = {
-                topLeft: { x: mid, y: mid },
-                botRight: { x: mid, y: mid },
+                topLeft: { x: mid, y: mid + 1 },
+                botRight: { x: mid, y: mid + 1 },
             };
         }
     }
@@ -120,16 +120,26 @@ export class Board {
     /**
      * Return all fields on the board where a tile could potentially be placed
      */
-    public getAllMoves(): Move[] {
+    public* getAllMoves(): IterableIterator<Move> {
+        if (this.turnsPlayed === 0) {
+            // First move: allow only one possibility
+            yield {
+               x: this.boundingBox.topLeft.x - Math.floor(TILE_WIDTH / 2),
+               y: this.boundingBox.topLeft.y - Math.floor(TILE_HEIGHT / 2),
+               orientation: Orientation.Up
+            };
+            return;
+        }
+
         const ret: Move[] = [];
         for (let y = this.boundingBox.topLeft.y - TILE_HEIGHT - 1; y < this.boundingBox.botRight.y + 1; y++) {
             for (let x = this.boundingBox.topLeft.x - TILE_WIDTH - 1; x < this.boundingBox.botRight.x + 1; x++) {
-                ret.push(
+                yield* [
                     { x, y, orientation: Orientation.Up },
                     { x, y, orientation: Orientation.Down },
                     { x, y, orientation: Orientation.Left },
                     { x, y, orientation: Orientation.Right }
-                    );
+                ];
             }
         }
         return ret;
@@ -138,10 +148,12 @@ export class Board {
     /**
      * return all moves: (position + orientations where the tile can be placed)
      */
-    public getLegalMoves(tile:Tile): CandidateMove[] {
+    public* getLegalMoves(tile:Tile): IterableIterator<CandidateMove> {
         const options = this.getAllMoves();
-        let locs = options.map(p => this.determinePlacement(tile, p)).filter(x => x !== undefined);
-        return locs as any;
+        for (const p of this.getAllMoves()) {
+            const loc = this.determinePlacement(tile, p);
+            if (loc !== undefined) { yield loc; }
+        }
     }
 
     public playMove(move: CandidateMove): void {
@@ -194,9 +206,9 @@ export class Board {
         // Stretch the bounding box
         for (const p of ones) {
             if (p.x < this.boundingBox.topLeft.x) this.boundingBox.topLeft.x = p.x;
-            if (p.x > this.boundingBox.botRight.x) this.boundingBox.botRight.x = p.x;
+            if (p.x >= this.boundingBox.botRight.x) this.boundingBox.botRight.x = p.x + 1;
             if (p.y < this.boundingBox.topLeft.y) this.boundingBox.topLeft.y = p.y;
-            if (p.y > this.boundingBox.botRight.y) this.boundingBox.botRight.y = p.y;
+            if (p.y >= this.boundingBox.botRight.y) this.boundingBox.botRight.y = p.y + 1;
         }
         this.turnsPlayed += 1;
     }

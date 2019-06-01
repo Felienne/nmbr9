@@ -90,7 +90,7 @@ test('empty board has many possible positions', () => {
     const options = board.getAllMoves();
 
     // THEN
-    expect(options.length).toBeGreaterThan(0);
+    expect(Array.from(options).length).toBeGreaterThan(0);
 });
 
 test('place 8, score is 0', () => {
