@@ -1,8 +1,12 @@
 import { pick, pickAndRemove, mean, sum } from '../util';
-import { fingerprintGameState } from '../display';
 import { Board, CandidateMove } from '../board';
 import { Deck } from '../cards';
 import { GameState } from '../game-state';
+import xmlbuilder = require('xmlbuilder');
+import { displayBoardHtml } from '../display';
+import fs = require('fs');
+
+let nodeCounter = 0;
 
 /**
  * An implementation of MCTS for Nmbr9
@@ -198,6 +202,29 @@ export class MonteCarloTree<M> {
         this.reportScore(score);
     }
 
+    public report(parent: xmlbuilder.XMLElement) {
+        const nodeText = `${this.meanScore.toFixed(0)} v:${this.timesVisited} M:${this.maxScore}`;
+        const now = Date.now();
+        const node = parent.ele('node', {
+            TEXT: nodeText,
+            FOLDED: 'true',
+            POSITION: 'right',
+            CREATED: `${now}`,
+            MODIFIED: `${now}`,
+            ID: `ID_${++nodeCounter}`,
+        });
+        const note = node.ele('richcontent', { TYPE: 'NOTE' });
+        displayBoardHtml(this.state.board, note.ele('body'));
+
+        for (const child of this.orderedExploredChildren()) {
+            child.report(node);
+        }
+
+        for (const unexplored of this.unexploredMoves) {
+            node.ele('node', { TEXT: '*unexplored*' });
+        }
+    }
+
     private mostPromisingChild(): MonteCarloTree<M> | undefined {
         let maximumUCB = 0;
         let bestChild: MonteCarloTree<M> | undefined;
@@ -211,6 +238,14 @@ export class MonteCarloTree<M> {
         }
         return bestChild!;
     }
+
+    private orderedExploredChildren(): MonteCarloTree<M>[] {
+        const ret = Array.from(this.exploredMoves.values());
+        ret.sort((a, b) => b.meanScore - a.meanScore);
+        return ret;
+    }
+
+
 }
 
 export interface PlayoutResult {
@@ -298,6 +333,7 @@ interface TreeStats {
 export interface MctsOptions extends ExploreOptions{
     maxThinkingTimeSec?: number;
     maxIterations?: number;
+    saveTreeFilename?: string;
 }
 
 /**
@@ -319,6 +355,10 @@ export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
 
     process.stderr.write('\n');
 
+    if (options.saveTreeFilename) {
+        saveTree(options.saveTreeFilename, root);
+    }
+
     return root.bestMove();
 }
 
@@ -334,4 +374,12 @@ export function fingerprintAll(path: IterableIterator<MonteCarloTree<any>>) {
     const ret = new Array<string>();
     for (const node of path) { ret.push(node.state.fingerprint); }
     return ret.join('');
+}
+
+export function saveTree<M>(fileName: string, root: MonteCarloTree<M>) {
+    const doc = xmlbuilder.create('map');
+    doc.attribute('version', '1.0.1');
+    root.report(doc);
+
+    fs.writeFileSync(fileName, doc.end({ pretty: true }), { encoding: 'utf-8' });
 }

@@ -138,3 +138,9 @@ export function shuffle<T>(xs: T[]) {
 export function swap<T>(xs: T[], i: number, j: number) {
     [xs[i], xs[j]] = [xs[j], xs[i]];
 }
+
+export function padLeft(n: number, x: number) {
+    const s = `${x}`;
+    if (s.length >= n) { return s; }
+    return '0'.repeat(n - s.length) + s;
+}

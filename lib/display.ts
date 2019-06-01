@@ -4,29 +4,78 @@ import { Board, Move, Orientation } from "./board";
 import util = require('util');
 import { Deck } from "./cards";
 import mm3 = require('murmurhash-native');
+import xmlbuilder = require('xmlbuilder');
 
 /**
  * Return a nice colorized stringification of the board
  */
 export function displayBoard(board: IBoard) {
+    const lines: string[] = [];
+
+    let line: string[] = [];
+    displayBoardGen(board, {
+        beginRow() {},
+        endRow() {
+            lines.push(line.join(''));
+            line = [];
+        },
+        emptyCell() {
+            lines.push(chalk.hex('#5C5C5C')('·'));
+        },
+        tile(nr: number, color: string) {
+            lines.push(chalk.hex(color)(`${nr}`));
+        }
+    });
+    return lines.join('\n') + '\n';
+}
+
+export function displayBoardHtml(board: IBoard, into: xmlbuilder.XMLElement) {
+    const table = into.ele('table', { cellspacing: 1 });
+    let tr: xmlbuilder.XMLElement;
+    displayBoardGen(board, {
+        beginRow() {
+            tr = table.ele('tr');
+        },
+        endRow() {
+        },
+        emptyCell() {
+            tr.ele('td');
+        },
+        tile(nr: number, color: string) {
+            tr.ele('td', {
+                style: `background: ${color}`
+            }, `${nr}`);
+        }
+    });
+}
+
+interface Renderer {
+    beginRow(): void;
+    emptyCell(): void;
+    tile(nr: number, color: string): void;
+    endRow(): void;
+}
+
+export function displayBoardGen(board: IBoard, renderer: Renderer) {
     const span = range(board.size);
 
-    const lines: string[] = [];
     for (let y = 0; y < board.size; y++) {
+        renderer.beginRow();
         const rowHeights = span.map(x => board.heightAt(x, y));
 
         // Skip empty rows
         if (rowHeights.every(h => h === 0)) continue;
 
-        lines.push(rowHeights.map((h, x) => {
-            if (h === 0) { return chalk.hex('#5C5C5C')('·'); }
-            const tileNr = board.tileValueAt(x, y);
-            return chalk.bgHex(TILE_COLORS[tileNr])(h);
-        }).join(''));
+        rowHeights.forEach((h, x) => {
+            if (h === 0) {
+                renderer.emptyCell();
+            } else {
+                const tileNr = board.tileValueAt(x, y);
+                renderer.tile(h, TILE_COLORS[tileNr]);
+            }
+        });
+        renderer.endRow();
     }
-
-    lines.push(board.printExtraInfo());;
-    return lines.join('\n') + '\n';
 }
 
 export function displayMove(move: Move) {

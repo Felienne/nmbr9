@@ -1,7 +1,7 @@
 import { Move, CandidateMove } from '../board';
 import { Tile } from '../tile';
 import { IPlayer } from "../player";
-import { pick } from '../util';
+import { pick, padLeft } from '../util';
 import { Deck } from '../cards';
 import { Board } from '../board';
 import { MonteCarloTree, printTreeStatistics, performMcts, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
@@ -44,6 +44,8 @@ export interface MonteCarloOptions {
      */
     boardScoreCalculator?: BoardFunction<number>;
     boardScoreCalculatorString?: string;
+
+    filenamePrefix?: string;
 }
 
 export type BranchSelectorFn = (board: Board, moves: CandidateMove[]) => CandidateMove[];
@@ -54,6 +56,7 @@ export type BranchSelectorFn = (board: Board, moves: CandidateMove[]) => Candida
 export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
 
     public readonly name: string = 'Willow McTreeFace';
+    private round = 0;
 
     constructor(protected readonly options: MonteCarloOptions) {
         if (options.maxIterations === undefined && options.maxThinkingTimeSec === undefined) {
@@ -75,14 +78,23 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
 
     public upperConfidenceBound(node: MonteCarloTree<any>, parentVisitCount: number) {
         //magic Twiddly factor
-        const explorationFactor = 100;
+        const explorationFactor = 5;
         return defaultUpperConfidenceBound(node, Math.max(1,parentVisitCount), explorationFactor);
     }
 
     public async calculateMove(state: GameState): Promise<Move | undefined> {
+        this.round += 1;
         const root = new MonteCarloTree(undefined, state, this);
 
-        performMcts(root, this.options);
+        let saveTreeFilename;
+        if (this.options.filenamePrefix) {
+            saveTreeFilename = this.options.filenamePrefix + `-${padLeft(5, this.round)}.mm`;
+        }
+
+        performMcts(root, {
+            ...this.options,
+            saveTreeFilename,
+        });
 
         if (this.options.printTreeStatistics) {
             printTreeStatistics(root);
@@ -96,6 +108,7 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
     }
 
     public async gameFinished(board: Board): Promise<void> {
+        this.round = 0;
     }
 
     /**
@@ -122,3 +135,4 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
         return board.score();
     }
 }
+

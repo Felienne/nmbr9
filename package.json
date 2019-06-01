@@ -29,9 +29,11 @@
   },
   "dependencies": {
     "@tensorflow/tfjs-node": "^1.0.2",
+    "@types/xmlbuilder": "^11.0.1",
     "@types/yargs": "^12.0.10",
     "chalk": "^2.4.2",
     "murmurhash-native": "^3.3.0",
+    "xmlbuilder": "^13.0.2",
     "yargs": "^13.2.2"
   }
 }

@@ -7,3 +7,4 @@ numberzero.model
 .vscode
 samples/
 coverage
+*.mm
