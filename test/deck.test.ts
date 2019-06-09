@@ -36,13 +36,3 @@ test('deck and onehot', () => {
   deck.advance();
   expect(deck.remainingOneHot()).toEqual([0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 });
-
-
-test('deck and shufflerest', () => {
-  const deck = Deck.fixedDeck([1, 2, 3]);
-
-  expect(deck.currentTile.value).toEqual(1);
-
-  const copy = deck.copyShuffleInvisible();
-  expect(copy.currentTile.value).toEqual(1);
-});

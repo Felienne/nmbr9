@@ -4,11 +4,10 @@ import { IPlayer } from "../player";
 import { pick, padLeft } from '../util';
 import { Deck } from '../cards';
 import { Board } from '../board';
-import { MonteCarloTree, printTreeStatistics, performMcts, defaultUpperConfidenceBound, TreeSearchSupport } from '../algo/monte-carlo';
+import { MonteCarloTree, printTreeStatistics, performMcts, defaultUpperConfidenceBound, MonteCarloCallbacks } from '../algo/monte-carlo';
 import { GameState } from '../game-state';
+import { PlaceTileNode } from '../algo/place-tile-node';
 
-
-// FIXME: A lot of things will need to change once we remove "full knowledge" of the Deck.
 
 export type BoardFunction<T> = (board: Board) => T;
 
@@ -45,6 +44,18 @@ export interface MonteCarloOptions {
     boardScoreCalculator?: BoardFunction<number>;
     boardScoreCalculatorString?: string;
 
+    /**
+     * Exploitation vs exploration factor
+     * 
+     * Higher = more exploration
+     * Lower = more exploitation
+     * 
+     * Good values are in the range ???? - ? ??? ? ? 
+     * 
+     * @default 5
+     */
+    explorationFactor?: number;
+
     filenamePrefix?: string;
 }
 
@@ -53,15 +64,18 @@ export type BranchSelectorFn = (board: Board, moves: CandidateMove[]) => Candida
 /**
  * This player executes MC tree search
  */
-export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
+export class MonteCarloTreePlayer implements IPlayer, MonteCarloCallbacks<any> {
 
     public readonly name: string = 'Willow McTreeFace';
     private round = 0;
+    private readonly explorationFactor: number;
 
     constructor(protected readonly options: MonteCarloOptions) {
         if (options.maxIterations === undefined && options.maxThinkingTimeSec === undefined) {
             throw new Error('Supply at least maxIterations or maxThinkingTimeSec');
         }
+
+        this.explorationFactor = options.explorationFactor !== undefined ? options.explorationFactor : 5;
     }
 
     /**
@@ -69,7 +83,7 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
      */
     public readonly continueExploringAfterInitialize = false;
 
-    initializeNode(node: MonteCarloTree<any>): void {
+    initializeNode(node: PlaceTileNode<any>): void {
         for (const move of this.selectBranches(node.state.board, node.legalMoves)){
             const child = node.addExploredNode(move)
             const score = child.randomPlayout();
@@ -77,14 +91,12 @@ export class MonteCarloTreePlayer implements IPlayer, TreeSearchSupport<any> {
     }
 
     public upperConfidenceBound(node: MonteCarloTree<any>, parentVisitCount: number) {
-        //magic Twiddly factor
-        const explorationFactor = 5;
-        return defaultUpperConfidenceBound(node, Math.max(1,parentVisitCount), explorationFactor);
+        return defaultUpperConfidenceBound(node, Math.max(1,parentVisitCount), this.explorationFactor);
     }
 
     public async calculateMove(state: GameState): Promise<Move | undefined> {
         this.round += 1;
-        const root = new MonteCarloTree(undefined, state, this);
+        const root = new PlaceTileNode(undefined, state, this);
 
         let saveTreeFilename;
         if (this.options.filenamePrefix) {

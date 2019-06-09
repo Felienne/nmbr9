@@ -1,12 +1,9 @@
-import { pick, pickAndRemove, mean, sum } from '../util';
+import { pick, mean, sum } from '../util';
 import { Board, CandidateMove } from '../board';
 import { Deck } from '../cards';
 import { GameState } from '../game-state';
 import xmlbuilder = require('xmlbuilder');
-import { displayBoardHtml } from '../display';
 import fs = require('fs');
-
-let nodeCounter = 0;
 
 /**
  * An implementation of MCTS for Nmbr9
@@ -19,152 +16,56 @@ export interface ExploreOptions {
     fingerprintNodes?: boolean;
 }
 
-/**
- * A node in a Monte Carlo Tree
- */
-export class MonteCarloTree<M> {
+export abstract class MonteCarloTree<M>{
     public readonly parent?: MonteCarloTree<M>;
     public readonly state: GameState;
+
+    /**
+     * Depth of this node in the tree
+     */
     public readonly level: number;
-
-    /**
-     * "Children" are explored submoves
-     */
-    public readonly exploredMoves = new Map<CandidateMove, MonteCarloTree<M>>();
-
-    /**
-     * Moves yet to explore
-     */
-    public unexploredMoves: CandidateMove[] = [];
-
-    public legalMoves: CandidateMove[] = [];
 
     // The scoring statistics for this node and all of its children
     public totalScore: number;
     public maxScore: number = 0;
     public timesVisited: number;
+
+    // annotation can be used by the AI to store arbitrary data on the nodes.
     public annotation?: M;
 
-    private support: TreeSearchSupport<M>;
 
-    private initialized: boolean = false;
+    /**
+     * This is in fact a set of parameter of explore, but since they are used in many places, 
+     * it's now a field (we might change this at one point)
+     */    
+    protected callbacks: MonteCarloCallbacks<M>;
 
     constructor(
             parent: MonteCarloTree<M> | undefined,
             state: GameState,
-            support: TreeSearchSupport<M>,
-            ) {
+            support: MonteCarloCallbacks<M>,
+        ) {
         this.parent = parent;
         this.state = state;
-        this.support = support;
+        this.callbacks = support;
         this.level = parent ? parent.level + 1 : 0;
 
         this.totalScore = 0;
         this.timesVisited = 0;
     }
 
+    public abstract explore(options?: ExploreOptions): void;
+    public abstract randomPlayout(): void;
+    public abstract report(parent: xmlbuilder.XMLElement, edgeAnnotation: string): void;
+
     public get meanScore(): number{
+        if (this.timesVisited === 0) { return 0; }
         return this.totalScore / this.timesVisited;
     }
 
     public* rootPath(): IterableIterator<MonteCarloTree<M>> {
         if (this.parent) { yield* this.parent.rootPath(); }
         yield this;
-    }
-
-    public bestMoveChild(): [CandidateMove | undefined, MonteCarloTree<M> | undefined] {
-        if (this.exploredMoves.size === 0) {
-            //we have not explored, we know nothing (we are from Barcelona)
-            //we can returns any unexplored move.
-            const move = pick(this.unexploredMoves);
-            if (!move) { return [undefined, undefined]; }
-
-            const node = this.addExploredNode(move);
-            return [move, node];
-        }
-
-        let maximumMeanScore = 0
-        let bestPair: [CandidateMove | undefined, MonteCarloTree<M> | undefined] = [undefined, undefined];
-        for (const [move, child] of this.exploredMoves.entries()){
-            if (child.meanScore >= maximumMeanScore){
-                maximumMeanScore = child.meanScore;
-                bestPair = [move, child];
-            }
-        }
-
-        return bestPair;
-    }
-
-    public bestMove(): CandidateMove | undefined {
-        return this.bestMoveChild()[0];
-    }
-
-    /**
-     * Explore node
-     *
-     * Works in one of two modes:
-     *
-     * - If there are "unexplored" moves, pick one of those and do a random rollout.
-     * - If no "unexplored" moves, pick the explored child with the highest UCB score
-     *   and recurse into that.
-     */
-    public explore(options: ExploreOptions = {}): void {
-        if (options.fingerprintNodes) {
-            process.stderr.write(this.state.fingerprint);
-        }
-
-        if (this.initialized === false){
-            this.legalMoves = Array.from(this.state.legalMoves());
-            this.support.initializeNode(this)
-            this.initialized = true
-
-            if (!this.support.continueExploringAfterInitialize) {
-                if (options.fingerprintNodes) { process.stderr.write('\n'); }
-                return;
-            }
-        }
-
-        if (this.legalMoves.length === 0) {
-            // This is a leaf node or there are no possible moves to play.
-            // Report the score so that we may update the weights and other
-            // trees may get explored.
-            // FIXME: Might bump exploration factor a bit if this happens?
-            this.reportScore(this.support.scoreForBoard(this.state.board, this.state.deck.hasCards));
-            if (options.fingerprintNodes) { process.stderr.write('[end-of-game]\n'); }
-            return;
-        }
-
-        if (this.unexploredMoves.length !== 0){
-            const toExplore = pickAndRemove(this.unexploredMoves)!;
-            const freshChild = this.addExploredNode(toExplore);
-
-            freshChild.randomPlayout();
-            if (options.fingerprintNodes) { process.stderr.write('\n'); }
-        } else {
-            const bestChild = this.mostPromisingChild();
-            if (bestChild === undefined) {
-                process.stderr.write('(no child to recurse into)');
-                // There are no more moves to play here, probably because the
-                // board is filled up to the brim. We score what's currently
-                // on the board.
-                return;
-            }
-            // bestChild.randomPlayout(); // Collect more stats
-            bestChild.explore(options);
-        }
-    }
-
-    /**
-     * Add a child node for the given move
-     */
-    public addExploredNode(move: CandidateMove): MonteCarloTree<M> {
-        // What's left becomes the Deck.
-        const stateAfterMove = this.state. copy();
-        stateAfterMove.play(move);
-
-        const freshChild = new MonteCarloTree(this, stateAfterMove, this.support);
-        this.exploredMoves.set(move, freshChild);
-        return freshChild;
     }
 
     /**
@@ -181,72 +82,6 @@ export class MonteCarloTree<M> {
             node = node.parent;
         }
     }
-
-    /**
-     * Perform a random playout starting from this node, reporting the score afterwards
-     */
-    public randomPlayout(): void {
-
-        process.stderr.write('(playout → ');
-        const playoutState = this.state.randomizedCopy();
-
-        while (playoutState.hasCards) {
-            // Random move met tile
-            const move = this.support.pickRandomPlayoutMove(playoutState.board, Array.from(playoutState.legalMoves()), playoutState.deck);
-            if (move === undefined) {
-                break;
-            }
-
-            playoutState.play(move);
-        }
-
-        const score = this.support.scoreForBoard(playoutState.board, playoutState.hasCards);
-        process.stderr.write(`${score})`);
-        this.reportScore(score);
-    }
-
-    public report(parent: xmlbuilder.XMLElement) {
-        const nodeText = `${this.meanScore.toFixed(0)} v:${this.timesVisited} M:${this.maxScore}`;
-        const now = Date.now();
-        const node = parent.ele('node', {
-            TEXT: nodeText,
-            FOLDED: 'true',
-            POSITION: 'right',
-            CREATED: `${now}`,
-            MODIFIED: `${now}`,
-            ID: `ID_${++nodeCounter}`,
-        });
-        const note = node.ele('richcontent', { TYPE: 'NOTE' });
-        displayBoardHtml(this.state.board, note.ele('body'));
-
-        for (const child of this.orderedExploredChildren()) {
-            child.report(node);
-        }
-
-        for (const unexplored of this.unexploredMoves) {
-            node.ele('node', { TEXT: '*unexplored*' });
-        }
-    }
-
-    private mostPromisingChild(): MonteCarloTree<M> | undefined {
-        let maximumUCB = 0;
-        let bestChild: MonteCarloTree<M> | undefined;
-        for (const child of this.exploredMoves.values()) {
-            const ucb = this.support.upperConfidenceBound(child, this.timesVisited);
-            if (isNaN(ucb)) { throw new Error('UCB returned NaN'); }
-            if (ucb >= maximumUCB) {
-                maximumUCB = ucb;
-                bestChild = child;
-            }
-        }
-        return bestChild!;
-    }
-
-    private orderedExploredChildren(): MonteCarloTree<M>[] {
-        const ret = Array.from(this.exploredMoves.values());
-        ret.sort((a, b) => b.meanScore - a.meanScore);
-        return ret;
-    }
 }
 
 export interface PlayoutResult {
@@ -256,7 +91,7 @@ export interface PlayoutResult {
 /**
  * Callbacks that the MCTS uses to do its work
  */
-export interface TreeSearchSupport<M> {
+export interface MonteCarloCallbacks<M> {
     /**
      * Called exactly once on every node
      *
@@ -307,11 +142,22 @@ export function printTreeStatistics<M>(root: MonteCarloTree<M>) {
     };
 
     function visit(node: MonteCarloTree<M>, depth: number) {
-        stats.maxDepth = Math.max(depth, stats.maxDepth);
-        stats.totalChildren.push(node.unexploredMoves.length + node.exploredMoves.size);
-        stats.unexploredChildren.push(node.unexploredMoves.length);
-        for (const child of node.exploredMoves.values()) {
-            visit(child, depth + 1);
+        if (node instanceof PlaceTileNode){
+            stats.maxDepth = Math.max(depth, stats.maxDepth);
+            stats.totalChildren.push(node.unexploredMoves.length + node.exploredMoves.size);
+            stats.unexploredChildren.push(node.unexploredMoves.length);
+            for (const child of node.exploredMoves.values()) {
+                visit(child, depth + 1);
+            }
+        }
+        else if (node instanceof DrawCardNode){
+            stats.maxDepth = Math.max(depth, stats.maxDepth);
+            stats.totalChildren.push(node.exploredCards.size);
+            //TODO op zich zouden we hier ook het aantal niet geprobeerde kaarten kunnen meten 
+            //stats.unexploredChildren.push(node.unexploredMoves.length);
+            for (const child of node.exploredCards.values()) {
+                visit(child, depth + 1);
+            }
         }
     }
 
@@ -340,7 +186,7 @@ export interface MctsOptions extends ExploreOptions{
 /**
  * Perform MCTS search
  */
-export function performMcts<M>(root: MonteCarloTree<M>, options: MctsOptions) {
+export function performMcts<M>(root: PlaceTileNode<M>, options: MctsOptions) {
     const deadline = options.maxThinkingTimeSec !== undefined ? Date.now() + options.maxThinkingTimeSec * 1000 : undefined;
     const maxIterations = options.maxIterations;
 
@@ -375,7 +221,7 @@ export interface DefaultTreeSearchOptions {
     explorationFactor?: number;
 }
 
-export class DefaultTreeSearch<M> implements TreeSearchSupport<M> {
+export class DefaultTreeSearch<M> implements MonteCarloCallbacks<M> {
     public continueExploringAfterInitialize: boolean = true;
 
     private readonly explorationFactor: number;
@@ -384,7 +230,7 @@ export class DefaultTreeSearch<M> implements TreeSearchSupport<M> {
         this.explorationFactor = options.explorationFactor !== undefined ? options.explorationFactor : 5;
     }
 
-    public initializeNode(node: MonteCarloTree<M>): void {
+    public initializeNode(node: PlaceTileNode<M>): void {
         node.unexploredMoves.push(...node.legalMoves);
     }
 
@@ -406,7 +252,11 @@ export class DefaultTreeSearch<M> implements TreeSearchSupport<M> {
  * @param explorationFactor Lower = deeper, higher = wider tree
  */
 export function defaultUpperConfidenceBound<M>(node: MonteCarloTree<M>, parentVisitCount: number, explorationFactor: number) {
-    return node.meanScore + explorationFactor * Math.sqrt(Math.log(parentVisitCount) / node.timesVisited);
+    // Prevent NaN's
+    parentVisitCount = Math.max(1, parentVisitCount);
+    const nodeVisitCount = Math.max(1, node.timesVisited);
+
+    return node.meanScore + explorationFactor * Math.sqrt(Math.log(parentVisitCount) / nodeVisitCount);
 }
 
 export function fingerprintAll(path: IterableIterator<MonteCarloTree<any>>) {
@@ -418,7 +268,10 @@ export function fingerprintAll(path: IterableIterator<MonteCarloTree<any>>) {
 export function saveTree<M>(fileName: string, root: MonteCarloTree<M>) {
     const doc = xmlbuilder.create('map');
     doc.attribute('version', '1.0.1');
-    root.report(doc);
+    root.report(doc, '');
 
     fs.writeFileSync(fileName, doc.end({ pretty: true }), { encoding: 'utf-8' });
 }
+
+import { PlaceTileNode } from './place-tile-node';import DrawCardNode from './draw-card-node';
+

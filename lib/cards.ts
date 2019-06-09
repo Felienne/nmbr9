@@ -111,15 +111,13 @@ export class Deck {
     }
 
     /**
-     * Return a copy of the deck, shuffling everything except the top card
+     * Return a copy of the deck, shuffling everything 
      */
-    public copyShuffleInvisible(): Deck {
+    public shuffledCopy(): Deck {
         if (this.isEmpty) { return this; }
 
         const ret = this.copy();
-        const current = ret.currentTile;
         ret.shuffle();
-        ret.cards.push(current);
         return ret;
     }
 }

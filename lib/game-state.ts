@@ -15,7 +15,7 @@ export class GameState {
   }
 
   public randomizedCopy() {
-    return new GameState(this.board.copy(), this.deck.copyShuffleInvisible());
+    return new GameState(this.board.copy(), this.deck.shuffledCopy());
   }
 
   public play(move: Move) {

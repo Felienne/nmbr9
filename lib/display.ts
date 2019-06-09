@@ -20,10 +20,10 @@ export function displayBoard(board: IBoard) {
             line = [];
         },
         emptyCell() {
-            lines.push(chalk.hex('#5C5C5C')('·'));
+            line.push(chalk.hex('#5C5C5C')('·'));
         },
         tile(nr: number, color: string) {
-            lines.push(chalk.hex(color)(`${nr}`));
+            line.push(chalk.hex(color)(`${nr}`));
         }
     });
     return lines.join('\n') + '\n';

@@ -40,9 +40,8 @@ export class Game {
                 player.timer.start();
 
                 try {
-                    // Player gets a randomized copy of the deck, otherwise they'll be able to
-                    // peek at it or modify it.
-                    const playerState = new GameState(player.board.copy(), this.deck.copyShuffleInvisible());
+                    // Player gets a randomized copy of the deck, otherwise they'll be able to modify it.
+                    const playerState = new GameState(player.board.copy(), this.deck.copy());
 
                     const move = await player.logic.calculateMove(playerState);
                     if (move !== undefined) {

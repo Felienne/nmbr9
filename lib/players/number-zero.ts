@@ -8,9 +8,10 @@ import { weightedPick } from "../util";
 import { IPlayer } from '../player';
 import { Deck } from '../cards';
 import { Tile } from '../tile';
-import { MonteCarloTree, performMcts, printTreeStatistics, TreeSearchSupport, fingerprintAll } from '../algo/monte-carlo';
+import { MonteCarloTree, performMcts, printTreeStatistics, MonteCarloCallbacks, fingerprintAll } from '../algo/monte-carlo';
 import { distribution } from '../display';
 import { GameState } from '../game-state';
+import { PlaceTileNode } from '../algo/place-tile-node';
 
 export interface NumberZeroOptions {
     /**
@@ -72,7 +73,7 @@ export type TrainingSample = [number[], number];
  * Height map of entire board, plus a vector to indicate which tiles
  * are still left.
  */
-export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
+export class NumberZero implements IPlayer, MonteCarloCallbacks<N0Annotation> {
     public readonly name: string = 'Number Zero';
 
     private model?: tf.LayersModel;
@@ -88,7 +89,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
     public async calculateMove(state: GameState): Promise<Move | undefined> {
         if (!this.model) { await this.initialize(); }
 
-        const root = new MonteCarloTree(undefined, state, this);
+        const root = new PlaceTileNode(undefined, state, this);
 
         performMcts(root, {
             ...this.options,
@@ -101,7 +102,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
 
         this.recordTrainingSamples(root);
 
-        const [bestMove, bestNode] = root.bestMoveChild();
+        const [bestMove, bestNode] = root.bestMoveAndChild();
         if (bestNode) {
             process.stderr.write(`Picking ${bestNode.state.fingerprint}, max score ${bestNode.maxScore}, mean score ${bestNode.meanScore}\n`);
         } else {
@@ -127,7 +128,7 @@ export class NumberZero implements IPlayer, TreeSearchSupport<N0Annotation> {
      */
     public readonly continueExploringAfterInitialize = false;
 
-    public initializeNode(node: MonteCarloTree<N0Annotation>): void {
+    public initializeNode(node: PlaceTileNode<N0Annotation>): void {
         // All nodes are immediately explored, and use the NN to attach a score to it
         const children = node.legalMoves.map(move => node.addExploredNode(move));
 
@@ -262,11 +263,14 @@ function adjustedMeanScore(node: MonteCarloTree<N0Annotation>) {
     return (node.totalScore + node.annotation!.predictedScore) / (node.timesVisited + 1);
 }
 
-function* exploredNodes<T>(root: MonteCarloTree<T>): IterableIterator<MonteCarloTree<T>> {
-    if (root.timesVisited > 0) {
-        yield root;
-    }
-    for (const [_, node] of root.exploredMoves) {
-        yield* exploredNodes(node);
+function* exploredNodes<T>(root: MonteCarloTree<T>): IterableIterator<PlaceTileNode<T>> {
+    if (root instanceof PlaceTileNode) {
+        if (root.timesVisited > 0) { yield root; }
+
+        for (const [_, node] of root.exploredMoves) {
+            yield* exploredNodes(node);
+        }
+    } else {
+        throw new Error('Not implemented yet for DrawCardNode');
     }
 }

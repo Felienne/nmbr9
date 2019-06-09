@@ -1,15 +1,13 @@
 // Test program to verify that our board can see all possible states
-
-import { MonteCarloTree, TreeSearchSupport, performMcts, defaultUpperConfidenceBound, DefaultTreeSearch } from '../lib/algo/monte-carlo';
+import { performMcts, DefaultTreeSearch } from '../lib/algo/monte-carlo';
 import { GameState } from '../lib/game-state';
-import { Board, CandidateMove } from '../lib/board';
+import { Board } from '../lib/board';
 import { FIXED_DECKS } from '../lib/test-harness';
-import { Deck } from '../lib/cards';
-import { pick } from '../lib/util';
+import { PlaceTileNode } from '../lib/algo/place-tile-node';
 
 
 const state = new GameState(new Board(), FIXED_DECKS[0]);
-const root = new MonteCarloTree(undefined, state, new DefaultTreeSearch({
+const root = new PlaceTileNode(undefined, state, new DefaultTreeSearch({
   explorationFactor: 5
 }));
 

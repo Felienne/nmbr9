@@ -45,10 +45,12 @@ function boardCalculator(board: Board):number{
 const game = new Game([
     //new RandomPlayer(),
     new MonteCarloTreePlayer({
-        maxIterations: 10,
+        maxIterations: 100,
         printTreeStatistics: true,
         boardScoreCalculator: boardCalculator,
         branchSelector: selector,
+        filenamePrefix: 'main',
+        explorationFactor: 10
     }),
 //    new MonteCarloPlayer(),
 ]);
