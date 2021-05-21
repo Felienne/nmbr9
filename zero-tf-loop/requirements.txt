@@ -19,7 +19,7 @@ scipy==1.2.1
 six==1.11.0
 tb-nightly==1.14.0a20190319
 tensorboard==1.13.1
-tensorflow==1.13.1
+tensorflow==2.5.0
 tensorflow-estimator==1.13.0
 tensorflow-estimator-2.0-preview==1.14.0.dev2019033000
 tensorflow-hub==0.3.0
